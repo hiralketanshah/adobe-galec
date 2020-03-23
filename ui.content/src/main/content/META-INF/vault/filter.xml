@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workspaceFilter version="1.0">
+    <filter root="/conf/societecooperativegroupements" mode="merge"/>
+    <filter root="/content/societecooperativegroupements" mode="merge"/>
+    <filter root="/content/dam/societecooperativegroupements" mode="merge"/>
+    <filter root="/content/experience-fragments/societecooperativegroupements" mode="merge"/>
+</workspaceFilter>
