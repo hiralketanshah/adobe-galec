@@ -40,8 +40,14 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
 	private final static Logger LOG = LoggerFactory.getLogger(WorkflowUpdateMetadata.class); 
 	@Reference
 	private ResourceResolverFactory resolverFactory;
-	private final String patternfilename1 = "^([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*$";  
-	private final String patternfilename2 = "^([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*$";        
+	//private final String patternfilename1 = "^([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*$";
+	private final String patternfilename1 = "^([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*-([0-9]{1,4}x[0-9]{1,4})*$";
+
+	private final String patternfilename2 = "^([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*-([0-9]{1,4}x[0-9]{1,4})*$";        
+
+	private final String patternfilename3 = "^([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*-([0-9]{1,4}x[0-9]{1,4})*-([0-9]{1,2})$";
+
+	private final String patternfilename4 = "^([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*-([0-9]{1,4}x[0-9]{1,4})*-([0-9]{1,2})$";        
 
 	private final String userlogin="oauthservice";
 	@Override
@@ -67,7 +73,9 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
 				
 				boolean error = false;
 				if(asset !=null) {
-					boolean check = checkFilename(assetName);					
+					boolean check =  (assetName.matches(patternfilename1)||assetName.matches(patternfilename2)
+							||assetName.matches(patternfilename3)||assetName.matches(patternfilename4));
+					
 					if(!check) {
 						error = true;
 					}	
@@ -78,43 +86,51 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
 				        try (ResourceResolver rResolver = resolverFactory.getServiceResourceResolver(params)){
 				        	if(rResolver!= null) {
 				        		LOG.info("name"+assetName);
+				        		String metier="";
+				        				String produit="";
+				        		String op="";
+				        		String semaine ="";
+				        		String titre=assetName.replace("-", " ");
+				        		
 				        		String[] assetMetadata = assetName.split("-");
+				        		 metier = assetMetadata[0];
+				        		 semaine = assetMetadata[1];
+
+				        		if(assetName.matches(patternfilename1)||assetName.matches(patternfilename3))
+				        		{
+				        		
 				        		LOG.info("meta produit"+assetMetadata.length);
 				        		LOG.info("meta produit 0"+assetMetadata[0]);
-				        		String metier = assetMetadata[0];
-				        		LOG.info("meta produit1"+assetMetadata[1]);
-
-				        		String semaine = assetMetadata[1];
+				        		LOG.info("meta produit 1"+assetMetadata[1]);
+				        		LOG.info("meta produit 3"+assetMetadata[2]);
 				        		
-				        		LOG.info("meta produit3"+assetMetadata[2]);
-				        		String produit="";
-				        		String op="";
-				        		if(assetMetadata.length==4)
-				        		{
+				        		
+				        		
 				        		 op = assetMetadata[2];
 				        		 produit = assetMetadata[3];
 
 				        		}
-				        		else
+				        		else if(assetName.matches(patternfilename2) ||assetName.matches(patternfilename4))
 				        		{
 					        		 produit = assetMetadata[2];
 
 				        		}
-				        		LOG.info("meta produit3"+assetMetadata[3]);
+				        		
 
 				       
 				        		//Map<String, Object> Metadata = asset.getMetadata();
 				        		
 				        		Resource metadataRes = asset.adaptTo(Resource.class).getChild("jcr:content/metadata");
 				        		ModifiableValueMap Metadata = metadataRes.adaptTo(ModifiableValueMap.class);
-				        		Metadata.put("dc:sample", "test checking");
 				        		LOG.info("meta"+Metadata.toString());
 
 								//set metadata
-								Metadata.put("operation", op);
-								Metadata.put("libelle-produit", produit);
+								Metadata.put("nom_ope", op);
+								Metadata.put("nom_produit", produit);
 								Metadata.put("semaine", semaine);
 								Metadata.put("metier", metier);
+								Metadata.put("dc:title", titre);
+
 								
 								
 								if (rResolver.hasChanges()) {
@@ -134,24 +150,16 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
         } 
 	}
 	
-	protected boolean checkFilename(String filename) {
+	/*protected boolean checkFilename(String filename) {
 		LOG.info("--- FILENAME : "+filename);
-		return (filename.matches(patternfilename1)||filename.matches(patternfilename2));
+		return (filename.matches(patternfilename1)||filename.matches(patternfilename2)
+				||filename.matches(patternfilename3)||filename.matches(patternfilename4));
 		
-	}
+	}*/
 	
 	
 	
-	
-	 protected String moveAsset(AssetManager assetManager,String currentPath, String newPath) {
-		    LOG.info("TRY TO MOVE the ASSET! {} to {}",currentPath,newPath);
-			if(assetManager.assetExists(newPath)) {
-		    	LOG.info("an asset already exist/ STOP");
-			}
-			assetManager.moveAsset(currentPath, newPath);
-		    LOG.info("Moved the ASSET! ");
-		    return null;
-		}
+
 	 
 
 	 
