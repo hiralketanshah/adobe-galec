@@ -129,7 +129,7 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
 								Metadata.put("nom_produit", produit);
 								Metadata.put("semaine", semaine);
 								Metadata.put("metier", metier);
-								Metadata.put("dc:title", titre);
+								Metadata.put(com.day.cq.dam.api.DamConstants.DC_TITLE, titre);
 
 								
 								
@@ -146,7 +146,8 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
 			}
   
         } catch (Exception e) {
-            throw new WorkflowException(e.getMessage(), e);
+        	
+        	LOG.debug(e.getMessage());
         } 
 	}
 	
