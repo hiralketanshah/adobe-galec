@@ -147,7 +147,7 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
   
         } catch (Exception e) {
         	
-        	LOG.debug(e.getMessage());
+        	LOG.error(e.getMessage());
         } 
 	}
 	
