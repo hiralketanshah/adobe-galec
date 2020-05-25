@@ -3,7 +3,9 @@ package com.societecooperativegroupements.core.workflow;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ModifiableValueMap;
+import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
@@ -59,7 +61,7 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
             if (workflowData.getPayloadType().equals("JCR_PATH")) {
 	            String payloadPath = workItem.getWorkflowData().getPayload().toString();
 	            payloadPath = payloadPath.split("/jcr:content/renditions/original")[0];
-				ResourceResolver resourceResolver = workflowSession.adaptTo(ResourceResolver.class);
+				ResourceResolver  resourceResolver = workflowSession.adaptTo(ResourceResolver.class);
 				Resource payload = resourceResolver.getResource(payloadPath);
 				//String assetPath = payload.getPath();
 				Asset asset = DamUtil.resolveToAsset(payload);
@@ -83,7 +85,7 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
 						Map<String, Object> params = new HashMap<String, Object>();
 				      	params.put(ResourceResolverFactory.SUBSERVICE, userlogin);
 				      
-				        try (ResourceResolver rResolver = resolverFactory.getServiceResourceResolver(params)){
+				         ResourceResolver rResolver = resolverFactory.getServiceResourceResolver(params);
 				        	if(rResolver!= null) {
 				        		LOG.info("name"+assetName);
 				        		String metier="";
@@ -137,7 +139,7 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
 									rResolver.commit();
 								}
 				        	}
-				        }
+				       
 		
 					}
 
@@ -145,10 +147,16 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
 				
 			}
   
-        } catch (Exception e) {
-        	
+        } catch ( PersistenceException e) {
+        	LOG.error("PERSISTENCE ERROR");
+
         	LOG.error(e.getMessage());
         } 
+		catch (LoginException e) {
+        	LOG.error("LOGIN ERROR");
+
+        	LOG.error(e.getMessage());
+		}
 	}
 	
 	/*protected boolean checkFilename(String filename) {
