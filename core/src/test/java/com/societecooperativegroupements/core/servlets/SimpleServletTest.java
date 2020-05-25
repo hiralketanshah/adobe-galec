@@ -34,6 +34,7 @@ class SimpleServletTest {
 
     private SimpleServlet fixture = new SimpleServlet();
 
+
     @Test
     void doGet(AemContext context) throws ServletException, IOException {
         context.build().resource("/content/test", "jcr:title", "resource title").commit();
@@ -44,6 +45,6 @@ class SimpleServletTest {
 
         fixture.doGet(request, response);
 
-        assertEquals("Title = resource title", response.getOutputAsString());
+        assertEquals("Title Test = resource title", response.getOutputAsString());
     }
 }
