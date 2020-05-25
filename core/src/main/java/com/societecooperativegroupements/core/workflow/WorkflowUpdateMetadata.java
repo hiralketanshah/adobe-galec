@@ -148,14 +148,12 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
 			}
   
         } catch ( PersistenceException e) {
-        	LOG.error("PERSISTENCE ERROR");
 
-        	LOG.error(e.getMessage());
+        	LOG.error("PERSISTENCE ERROR"+e.getMessage());
         } 
 		catch (LoginException e) {
-        	LOG.error("LOGIN ERROR");
 
-        	LOG.error(e.getMessage());
+        	LOG.error("LOGIN ERROR"+e.getMessage());
 		}
 	}
 	
