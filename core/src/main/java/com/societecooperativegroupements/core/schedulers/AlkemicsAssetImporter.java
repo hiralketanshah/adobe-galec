@@ -153,7 +153,13 @@ public class AlkemicsAssetImporter
 				additionalParams.put("updated_at_to", endtime);
 				additionalParams.put("limit", limit);
 				additionalParams.put("next_page", page);
+				
+
 				Alkemics obj = getProductList(access_token, additionalParams);
+				
+				
+			      Map<String, Object> map = Collections.singletonMap("filter_source_include", new String[] { "gtin", "uuid", "assets.pictures", "assets.lastUpdatedAt.pictures", "supplierId", "isDisplayUnit", "isConsumerUnit", "namePublicLong.data" });
+
 
 				max = max + obj.getData().size();
 				returnedProduct = obj.getData();
@@ -391,31 +397,26 @@ public class AlkemicsAssetImporter
   
   public Alkemics getProductList(String accessToken, Map<String, Object> additionalParams)
   {
-
-		HttpPost post = new HttpPost(urlProduct);
-		CloseableHttpResponse response;
-		Alkemics result = null;
-		// add request headers
-
-		try {
-			Map<String, Object> map = Collections.singletonMap("filter_source_include",
-					new String[] { "gtin", "uuid", "assets.pictures", "assets.lastUpdatedAt.pictures", "supplierId",
-							"isDisplayUnit", "isConsumerUnit", "namePublicLong.data" });
-
-			if (additionalParams != null && !additionalParams.isEmpty()) {
-				map.putAll(additionalParams);
-			}
-
-			// send a JSON data
-			post.addHeader("Authorization", "Bearer " + accessToken);
-
-			post.setEntity(new StringEntity(gson.toJson(map)));
-
-			response = httpClient.execute(post);
-
-			result = gson.fromJson(EntityUtils.toString(response.getEntity()), Alkemics.class);
-
-	    }
+    HttpPost post = new HttpPost(this.urlProduct);
+    
+    Alkemics result = null;
+    try
+    {
+    	
+      Map<String, Object> map = new HashMap<>();
+      map.put("filter_source_include", new String[] { "gtin", "uuid", "assets.pictures", "assets.lastUpdatedAt.pictures", "supplierId", "isDisplayUnit", "isConsumerUnit", "namePublicLong.data" });
+    		  
+      if ((additionalParams != null) && (!additionalParams.isEmpty())) {
+        map.putAll(additionalParams);
+      }
+      post.addHeader("Authorization", "Bearer " + accessToken);
+      
+      post.setEntity(new StringEntity(gson.toJson(map)));
+      
+      CloseableHttpResponse response = this.httpClient.execute(post);
+      
+      result = (Alkemics)gson.fromJson(EntityUtils.toString(response.getEntity()), Alkemics.class);
+    }
     catch (UnsupportedEncodingException e)
     {
       this.logger.error("Error ", e.getMessage());
