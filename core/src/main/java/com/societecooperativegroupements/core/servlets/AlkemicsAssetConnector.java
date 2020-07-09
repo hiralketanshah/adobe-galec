@@ -79,17 +79,17 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 8036720673306445672L;
+	private static transient final long serialVersionUID = 8036720673306445672L;
 
 	// Inject a Sling ResourceResolverFactory
 	@Reference
-	private ResourceResolverFactory resolverFactory;
+	private transient ResourceResolverFactory resolverFactory;
 	private CloseableHttpClient httpClient;
 	private static final Gson gson = new Gson();
 	@Reference
 	private HttpClientBuilderFactory httpClientBuilderFactory;
 
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private final transient Logger logger = LoggerFactory.getLogger(getClass());
 
 	private String urlToken = "https://apis.alkemics.com/auth/v2/token";
 	private String urlProduct = "https://apis.alkemics.com/public/v1/products/list";
@@ -98,7 +98,7 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 
 	private String clientId;
 
-	private List<Resource> activeAssetResources;
+	private transient List<Resource> activeAssetResources;
 
 	private String clientSecret;
 
