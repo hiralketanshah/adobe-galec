@@ -3,6 +3,7 @@ package com.societecooperativegroupements.core.schedulers;
 import com.day.cq.dam.api.Asset;
 import com.day.cq.dam.api.AssetManager;
 import com.day.cq.dam.api.Rendition;
+import com.day.cq.dam.scene7.api.constants.Scene7Constants;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -156,10 +157,13 @@ public class AlkemicsAssetImporter
 				
 
 				Alkemics obj = getProductList(access_token, additionalParams);
-				
+				if(null!=obj) {
 				
 			      Map<String, Object> map = Collections.singletonMap("filter_source_include", new String[] { "gtin", "uuid", "assets.pictures", "assets.lastUpdatedAt.pictures", "supplierId", "isDisplayUnit", "isConsumerUnit", "namePublicLong.data" });
 
+if(null!=obj.getData())
+{
+	page = obj.getNextPage();
 
 				max = max + obj.getData().size();
 				returnedProduct = obj.getData();
@@ -174,18 +178,18 @@ public class AlkemicsAssetImporter
 						} else
 
 						{
-							logger.debug("Aucun Asset trouvÃ© pour le produit" + currentProduct.getGtin());
+							logger.debug("Aucun Asset trouvé pour le produit" + currentProduct.getGtin());
 						}
 
 					}
 					numberProcessed = numberProcessed + max;
-					page = obj.getNextPage();
 					logger.debug(
 							"NOMBRE DE PRODUIT LUS: " + numberProcessed + "SUR  UN TOTAL " + obj.getTotalResults());
 					logger.debug("NOMBRE DE PRODUIT AVEC DES IMAGES " + listeProduit.size());
 
 					readProductByDay(endDate, access_token, page, numberProcessed, listeProduit);
 
+				}}
 				}
 				break;
 
@@ -293,7 +297,7 @@ public class AlkemicsAssetImporter
             
             readProductByDay(endDate, accessToken, page, numberProcessed, listeProduit);
             numberAsset += listeProduit.size();
-            this.logger.info("NOMBRE TOTAL D'ASSET:" + numberAsset);
+            this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset+ "A LA DATE DU:" + endDate);
             if (!this.dryRun)
             {
             int max = listeProduit.size();
@@ -618,7 +622,7 @@ public class AlkemicsAssetImporter
   {
     Asset asset = (Asset)resource.adaptTo(Asset.class);
     
-    String s7sceneID = asset.getMetadataValue("dam:scene7ID");
+    String s7sceneID = asset.getMetadataValue(Scene7Constants.PN_S7_ASSET_ID);
     
     return (null != s7sceneID) && (!StringUtils.isEmpty(s7sceneID));
   }
