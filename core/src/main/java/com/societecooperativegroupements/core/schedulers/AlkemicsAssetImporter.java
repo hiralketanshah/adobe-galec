@@ -386,15 +386,16 @@ if(null!=obj.getData())
                 }
               }
             }
-            calendar.setTime(endDate);
-            calendar.add(5, -1);
-            endDate = calendar.getTime();
+            
           }
             else
             {
                 this.logger.info("DRY RUN: running by day" );
 
             }
+            calendar.setTime(endDate);
+            calendar.add(Calendar.DATE, -1);
+            endDate = calendar.getTime();
           }
         }
       }
