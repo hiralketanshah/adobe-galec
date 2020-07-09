@@ -294,7 +294,8 @@ public class AlkemicsAssetImporter
             readProductByDay(endDate, accessToken, page, numberProcessed, listeProduit);
             numberAsset += listeProduit.size();
             this.logger.info("NOMBRE TOTAL D'ASSET:" + numberAsset);
-            
+            if (!this.dryRun)
+            {
             int max = listeProduit.size();
             Map<String, String> hm = null;
             for (int i = 0; i < max; i++)
@@ -341,8 +342,7 @@ public class AlkemicsAssetImporter
                   String assetUrl = ((Picture)currentProduct.getAssets().getPictures().get(j)).getUrl();
                   if ((null != assetUrl) && (!assetUrl.equals("")))
                   {
-                    if (!this.dryRun)
-                    {
+                    
                       Picture productAsset = (Picture)currentProduct.getAssets().getPictures().get(j);
                       
                       String name = categorie + "_" + productAsset.getGdsnFileName();
@@ -374,7 +374,7 @@ public class AlkemicsAssetImporter
                       this.logger.info(" url: " + assetUrl);
                       
                       writeToDam(name, gtin, assetUrl, hm, errorCase);
-                    }
+                    
                   }
                   else {
                     this.logger.info("Erreur URL Fichier " + assetUrl);
@@ -385,6 +385,12 @@ public class AlkemicsAssetImporter
             calendar.setTime(endDate);
             calendar.add(5, -1);
             endDate = calendar.getTime();
+          }
+            else
+            {
+                this.logger.info("DRY RUN: running by day" );
+
+            }
           }
         }
       }
