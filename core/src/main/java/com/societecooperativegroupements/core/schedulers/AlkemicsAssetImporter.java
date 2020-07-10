@@ -53,6 +53,8 @@ import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.api.resource.ResourceUtil;
+import org.apache.sling.api.resource.ValueMap;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -117,6 +119,7 @@ public class AlkemicsAssetImporter
     
     this.activeAssetResources = new ArrayList();
   }
+  
   
   
   public static void main(String[] args)
@@ -392,8 +395,7 @@ if(null!=obj.getData())
                 }
               }
             }
-			this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset );
-
+			
             
           }
             else
@@ -404,6 +406,8 @@ if(null!=obj.getData())
             calendar.setTime(endDate);
             calendar.add(Calendar.DATE, -1);
             endDate = calendar.getTime();
+            this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset );
+
           }
         
       }
@@ -635,10 +639,20 @@ if(null!=obj.getData())
   private boolean isScene7Asset(Resource resource, ResourceResolver resourceResolver)
   {
     Asset asset = (Asset)resource.adaptTo(Asset.class);
+
+    Resource metadataResource = resource.getChild("jcr:content");
+    ValueMap properties = ResourceUtil.getValueMap(metadataResource);
     
-    String s7sceneID = asset.getMetadataValue(Scene7Constants.PN_S7_ASSET_ID);
+   // String title = properties.get(Scene7Constants.PN_S7_ASSET_ID, String.class);
+
+   String damAssetState = properties.get("dam:assetState", String.class);
+    String s7sceneID = properties.get("dam:s7damType", String.class);
     
-    return (null != s7sceneID) && (!StringUtils.isEmpty(s7sceneID));
+	return (null != damAssetState) && (damAssetState.equals("processed"));
+    //String s7sceneID = asset.getMetadataValue(Scene7Constants.PN_S7_ASSET_ID);
+	///String s7sceneID = asset.getMetadataValue("gtin");
+
+    
   }
   
   private void waitForWorkflowsCompletion(long waitTime, ResourceResolver resourceResolver)

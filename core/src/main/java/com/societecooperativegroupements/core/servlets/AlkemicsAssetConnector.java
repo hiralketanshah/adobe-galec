@@ -40,11 +40,14 @@ import org.apache.http.util.EntityUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 
 import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.api.resource.ResourceUtil;
+import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.osgi.framework.Constants;
@@ -477,7 +480,6 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 									}
 								}
 							}
-							this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset );
 
 							
 						} else {
@@ -487,6 +489,8 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 						calendar.setTime(endDate);
 						calendar.add(Calendar.DATE, -1);
 						endDate = calendar.getTime();
+						this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset );
+
 					}
 				
 			}
@@ -661,19 +665,25 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 	private boolean isScene7Asset(Resource resource, ResourceResolver resourceResolver) {
 		Asset asset = (Asset) resource.adaptTo(Asset.class);
 
-		String s7sceneID = asset.getMetadataValue(Scene7Constants.PN_S7_ASSET_ID);
+		resourceResolver.refresh();
+	    Resource metadataResource = resource.getChild("jcr:content");
+	    ValueMap properties = ResourceUtil.getValueMap(metadataResource);
+	    
+	   // String title = properties.get(Scene7Constants.PN_S7_ASSET_ID, String.class);
 
-		return (null != s7sceneID) && (!StringUtils.isEmpty(s7sceneID));
+	   String damAssetState = properties.get("dam:assetState", String.class);
+	    String s7sceneID = properties.get("dam:s7damType", String.class);
+		return (null != damAssetState) && (damAssetState.equals("processed"));
 	}
 
 	private void waitForWorkflowsCompletion(long waitTime, ResourceResolver resourceResolver)
 			throws InterruptedException {
 		long startWaitingTime = System.currentTimeMillis();
 		while (this.activeAssetResources.size() > 0) {
-			resourceResolver.refresh();
 			Iterator<Resource> activeAssetResourcesIterator = this.activeAssetResources.iterator();
 			while (activeAssetResourcesIterator.hasNext()) {
 				Resource activeAssetResource = (Resource) activeAssetResourcesIterator.next();
+				
 				if (isScene7Asset(activeAssetResource, resourceResolver)) {
 					activeAssetResourcesIterator.remove();
 				}
