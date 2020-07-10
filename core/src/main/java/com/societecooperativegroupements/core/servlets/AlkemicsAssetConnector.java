@@ -237,7 +237,7 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 
 		int max = 0;
 		List<AkDatum> returnedProduct = null;
-		logger.debug("Product in process" + endDate);
+		logger.info("Product in process" + endDate);
 
 		do {
 			int limit = 500;
@@ -280,14 +280,14 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 							} else
 
 							{
-								logger.debug("Aucun Asset trouvé pour le produit" + currentProduct.getGtin());
+								logger.debug("Aucun Asset trouvé pour le produit: " + currentProduct.getGtin());
 							}
 
 						}
 						numberProcessed = numberProcessed + max;
-						logger.debug(
+						logger.info(
 								"NOMBRE DE PRODUIT LUS: " + numberProcessed + "SUR  UN TOTAL " + obj.getTotalResults());
-						logger.debug("NOMBRE DE PRODUIT AVEC DES IMAGES " + listeProduit.size());
+						logger.info("NOMBRE DE PRODUIT AVEC DES IMAGES " + listeProduit.size());
 
 						readProductByDay(endDate, access_token, page, numberProcessed, listeProduit);
 
@@ -364,22 +364,35 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 				Date endDate = null;
 				Date dateMin = null;
 				if (this.init) {
-					try {
-						// String endDateEntry = "01-07-2020";
+					
+						if(endDateEntry==null)
+						 endDateEntry = "01-07-2020";
+						if(dateMin==null)
 
-						// String dateMinEntry = "28-06-2019";
+							startDateEntry = "28-06-2019";
+						
 						endDate = format.parse(endDateEntry);
 
 						dateMin = format.parse(startDateEntry);
-					} catch (java.text.ParseException e) {
-						this.logger.error("Error when parsin", e.getMessage());
+						
+				}
+					else
+					{
+						endDate=new java.util.Date();  
+
+						calendar.setTime(endDate);
+						calendar.add(Calendar.DATE, -1);
+						dateMin=calendar.getTime();
 					}
+					
+					
 					while (endDate.compareTo(dateMin) > 0) {
 						List<AkDatum> listeProduit = new ArrayList();
 
 						readProductByDay(endDate, accessToken, page, numberProcessed, listeProduit);
 						numberAsset += listeProduit.size();
-						this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset + "A LA DATE DU:" + endDate);
+						this.logger.info("NOMBRE TOTAL D'ASSET : " + listeProduit.size() + " A LA DATE DU:" + endDate);
+
 						if (!this.dryRun) {
 							int max = listeProduit.size();
 							Map<String, String> hm = null;
@@ -464,6 +477,8 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 									}
 								}
 							}
+							this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset );
+
 							
 						} else {
 							this.logger.info("DRY RUN: running by day");
@@ -473,10 +488,13 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 						calendar.add(Calendar.DATE, -1);
 						endDate = calendar.getTime();
 					}
-				}
+				
 			}
 		} catch (InterruptedException e) {
 			this.logger.error("Erreur d'ecriture de Fichier " + e.getMessage());
+		}
+		 catch (java.text.ParseException e) {
+			this.logger.error("Error when parsin", e.getMessage());
 		}
 	}
 
@@ -510,7 +528,7 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 		} catch (Exception e) {
 			this.logger.error("Error  ", e.getMessage());
 		} finally {
-			this.logger.info("End");
+			this.logger.debug("End get productList");
 		}
 		return result;
 	}
@@ -544,7 +562,7 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 		} catch (org.apache.http.ParseException e) {
 			this.logger.error("Error when getting the secret", e.getMessage());
 		} finally {
-			this.logger.info("End");
+			this.logger.debug("End");
 		}
 		return result;
 	}
@@ -597,7 +615,7 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 			Node metaNode = contentNode.getNode("metadata");
 			Resource assetResource = resolver.getResource(newFile);
 
-			this.logger.info("MISE A JOUR DESMETADONNES PRODUITS");
+			this.logger.info("MISE A JOUR DES METADONNES PRODUITS");
 			for (Map.Entry<String, String> entry : meta.entrySet()) {
 				metaNode.setProperty((String) entry.getKey(), (String) entry.getValue());
 			}
@@ -636,9 +654,7 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 					this.logger.error("Errror while getting resolve" + e.getMessage());
 				}
 			}
-			if ((resolver != null) && (resolver.isLive())) {
-				resolver.close();
-			}
+			
 		}
 	}
 
@@ -668,7 +684,7 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 						Integer.valueOf(this.activeAssetResources.size()));
 				this.activeAssetResources.clear();
 			}
-			this.logger.info("Waiting for asset processing {}", Integer.valueOf(this.activeAssetResources.size()));
+			this.logger.info("Waiting for asset processing {}", this.activeAssetResources.size());
 			Thread.sleep(waitTime);
 		}
 	}

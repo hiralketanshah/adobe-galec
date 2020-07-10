@@ -118,6 +118,7 @@ public class AlkemicsAssetImporter
     this.activeAssetResources = new ArrayList();
   }
   
+  
   public static void main(String[] args)
   {
     AlkemicsAssetImporter akm = new AlkemicsAssetImporter();
@@ -278,26 +279,31 @@ if(null!=obj.getData())
         Date dateMin = null;
         if (this.init)
         {
-          try
-          {
+          
            //String endDateEntry = "01-07-2020";
             
           //  String dateMinEntry = "28-06-2019";
             endDate = format.parse(endDateEntry);
             
             dateMin = format.parse(startDateEntry);
-          }
-          catch (java.text.ParseException e)
-          {
-            this.logger.error("Error when parsin", e.getMessage());
-          }
+         
+        } 
+      	else
+		{
+			endDate=new java.util.Date();  
+
+			calendar.setTime(endDate);
+			calendar.add(Calendar.DATE, -1);
+			dateMin=calendar.getTime();
+		}
+		
           while (endDate.compareTo(dateMin) > 0)
           {
             List<AkDatum> listeProduit = new ArrayList();
             
             readProductByDay(endDate, accessToken, page, numberProcessed, listeProduit);
             numberAsset += listeProduit.size();
-            this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset+ "A LA DATE DU:" + endDate);
+			this.logger.info("NOMBRE TOTAL D'ASSET : " + listeProduit.size() + " A LA DATE DU:" + endDate);
             if (!this.dryRun)
             {
             int max = listeProduit.size();
@@ -386,6 +392,8 @@ if(null!=obj.getData())
                 }
               }
             }
+			this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset );
+
             
           }
             else
@@ -397,13 +405,18 @@ if(null!=obj.getData())
             calendar.add(Calendar.DATE, -1);
             endDate = calendar.getTime();
           }
-        }
+        
       }
     }
     catch (InterruptedException e)
     {
       this.logger.error("Erreur d'ecriture de Fichier " + e.getMessage());
     }
+  
+  catch (java.text.ParseException e)
+  {
+    this.logger.error("Error when parsin", e.getMessage());
+  }
   }
   
   public Alkemics getProductList(String accessToken, Map<String, Object> additionalParams)
@@ -430,15 +443,15 @@ if(null!=obj.getData())
     }
     catch (UnsupportedEncodingException e)
     {
-      this.logger.error("Error ", e.getMessage());
+      this.logger.error("Error UnsupportedEncodingException ", e.getMessage());
     }
     catch (ClientProtocolException e)
     {
-      this.logger.error("Error ", e.getMessage());
+      this.logger.error("Error ClientProtocolException", e.getMessage());
     }
     catch (IOException e)
     {
-      this.logger.error("Error ", e.getMessage());
+      this.logger.error("Error IOException ", e.getMessage());
     }
     catch (Exception e)
     {
