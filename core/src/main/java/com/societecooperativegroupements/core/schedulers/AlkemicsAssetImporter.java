@@ -698,7 +698,7 @@ if(null!=obj.getData())
     int batchSize() default 1000;
     
     @AttributeDefinition(name="WaitTime", description="Can be configured in /system/console/configMgr")
-    int waitTime() default 300;
+    int waitTime() default 120000;
     
     @AttributeDefinition(name="endDateEntry", description="Can be configured in /system/console/configMgr")
     String endDateEntry() default "01-07-2020";

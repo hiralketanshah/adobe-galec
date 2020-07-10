@@ -104,7 +104,7 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 
 	private int batchSize = 1000;
 
-	private long waitTime = 20000;
+	private long waitTime = 120000;
 
 	private long Totaltimefor1000 = 0;
 
