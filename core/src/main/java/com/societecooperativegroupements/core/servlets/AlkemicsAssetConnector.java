@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFormatException;
@@ -574,6 +575,13 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 	private void writeToDam(String name, String gtin, String path, Map<String, String> meta, boolean errorCase)
 			throws InterruptedException {
 		this.logger.info("WRITING ASSET:" + name);
+		if(name.equals("UC_null"))
+		{
+			this.logger.info("NOM ASSET UC_NULL :" + name);
+
+		}
+		else
+		{
 		InputStream inputStream = null;
 		Map<String, Object> param = new HashMap();
 		param.put("sling.service.subservice", "content-writer-service");
@@ -600,11 +608,13 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 				newFile = "/content/dam/dam/Usage-Interne/Erreur-Produits/" + hierarchy + name;
 			}
 			Resource assetExist = resolver.getResource(newFile);
+			
 			if (assetExist != null) {
 				this.logger.info("CET ASSET EXISTE DEJA");
 				this.existingAsset += 1;
 				this.logger.info("Nombre d'asset en double :" + this.existingAsset);
 			}
+			
 			long startTime = new Date().getTime();
 			assetMgr.createAsset(newFile, inputStream, "image/jpeg", true);
 
@@ -626,11 +636,17 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 			resolver.commit();
 
 			resolver.refresh();
+			 this.activeAssetResources.add(assetResource);
+		      
+		      if (this.activeAssetResources.size() >= this.batchSize) {
+		     // waitForWorkflowsCompletion(this.waitTime, resolver);
+					this.logger.info("WAITING WORKFLOW PROCESS");
 
-			this.activeAssetResources.add(assetResource);
-			if (this.activeAssetResources.size() >= this.batchSize) {
-				waitForWorkflowsCompletion(this.waitTime, resolver);
-			}
+		       Thread.sleep(waitTime);
+		       activeAssetResources.clear();
+
+		      }
+			
 		} catch (PersistenceException e1) {
 			this.logger.error("Errror while getting resolve" + e1.getMessage());
 		} catch (InterruptedException e) {
@@ -660,6 +676,10 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 			}
 			
 		}
+		 if ((resolver != null) && (resolver.isLive())) {
+		        resolver.close();
+		      }
+		}
 	}
 
 	private boolean isScene7Asset(Resource resource, ResourceResolver resourceResolver) {
@@ -669,7 +689,6 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 	    Resource metadataResource = resource.getChild("jcr:content");
 	    ValueMap properties = ResourceUtil.getValueMap(metadataResource);
 	    
-	   // String title = properties.get(Scene7Constants.PN_S7_ASSET_ID, String.class);
 
 	   String damAssetState = properties.get("dam:assetState", String.class);
 	    String s7sceneID = properties.get("dam:s7damType", String.class);

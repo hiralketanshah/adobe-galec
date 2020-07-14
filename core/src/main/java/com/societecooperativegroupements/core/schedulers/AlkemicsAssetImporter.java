@@ -4,6 +4,7 @@ import com.day.cq.dam.api.Asset;
 import com.day.cq.dam.api.AssetManager;
 import com.day.cq.dam.api.Rendition;
 import com.day.cq.dam.scene7.api.constants.Scene7Constants;
+import com.day.cq.workflow.PayloadMap;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFormatException;
@@ -49,6 +51,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.osgi.services.HttpClientBuilderFactory;
 import org.apache.http.util.EntityUtils;
 import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -518,6 +521,12 @@ if(null!=obj.getData())
   private void writeToDam(String name, String gtin, String path, Map<String, String> meta, boolean errorCase)
     throws InterruptedException
   {
+	  if(name.equals("UC_null"))
+		{
+			this.logger.info("NOM ASSET UC_NULL :" + name);
+
+		}
+	  else {
     this.logger.info("WRITING ASSET:" + name);
     InputStream inputStream = null;
     Map<String, Object> param = new HashMap();
@@ -572,13 +581,21 @@ if(null!=obj.getData())
       for (Map.Entry<String, String> entry : meta.entrySet()) {
         metaNode.setProperty((String)entry.getKey(), (String)entry.getValue());
       }
-      resolver.commit();
+     resolver.commit();
       
-      resolver.refresh();
+   // resolver.refresh();
+    //  adminSession.save();
+      
       
       this.activeAssetResources.add(assetResource);
+      
       if (this.activeAssetResources.size() >= this.batchSize) {
-        waitForWorkflowsCompletion(this.waitTime, resolver);
+     // waitForWorkflowsCompletion(this.waitTime, resolver);
+			this.logger.info("WAITING WORKFLOW PROCESS");
+
+       Thread.sleep(waitTime);
+       activeAssetResources.clear();
+
       }
     }
     catch (PersistenceException e1)
@@ -630,27 +647,32 @@ if(null!=obj.getData())
           this.logger.error("Errror while getting resolve" + e.getMessage());
         }
       }
-      if ((resolver != null) && (resolver.isLive())) {
+     if ((resolver != null) && (resolver.isLive())) {
         resolver.close();
       }
     }
+	  }
   }
-  
+
   private boolean isScene7Asset(Resource resource, ResourceResolver resourceResolver)
   {
-    Asset asset = (Asset)resource.adaptTo(Asset.class);
+	  
+	  
+	resourceResolver.refresh();
+    Resource metadataResource = resource.getChild("jcr:content/metadata");
+	
 
-    Resource metadataResource = resource.getChild("jcr:content");
     ValueMap properties = ResourceUtil.getValueMap(metadataResource);
-    
-   // String title = properties.get(Scene7Constants.PN_S7_ASSET_ID, String.class);
+        
+ //   PayloadMap payloadMap = resourceResolver.adaptTo(PayloadMap.class);
+//   boolean status = payloadMap.isInWorkflow(resource.getPath() + "/jcr:content/renditions/original", true);
 
-   String damAssetState = properties.get("dam:assetState", String.class);
-    String s7sceneID = properties.get("dam:s7damType", String.class);
+
+  final String s7sceneID = properties.get("dam:scene7ID", String.class);
     
-	return (null != damAssetState) && (damAssetState.equals("processed"));
-    //String s7sceneID = asset.getMetadataValue(Scene7Constants.PN_S7_ASSET_ID);
-	///String s7sceneID = asset.getMetadataValue("gtin");
+  final String  scene7FileStatus=properties.get("dam:scene7FileStatus",String.class);
+    
+	return (null != s7sceneID|| null!=scene7FileStatus);
 
     
   }
@@ -661,7 +683,6 @@ if(null!=obj.getData())
     long startWaitingTime = System.currentTimeMillis();
     while (this.activeAssetResources.size() > 0)
     {
-      resourceResolver.refresh();
       Iterator<Resource> activeAssetResourcesIterator = this.activeAssetResources.iterator();
       while (activeAssetResourcesIterator.hasNext())
       {
@@ -671,12 +692,13 @@ if(null!=obj.getData())
         }
       }
       long waitedTime = System.currentTimeMillis() - startWaitingTime;
-      if (waitedTime > 60000000L)
+      if (waitedTime > 60000000)
       {
         this.logger.info("Stop waiting for asset processing {}", Integer.valueOf(this.activeAssetResources.size()));
         this.activeAssetResources.clear();
       }
       this.logger.info("Waiting for asset processing {}", Integer.valueOf(this.activeAssetResources.size()));
+      if(activeAssetResources.size()>0);
       Thread.sleep(waitTime);
     }
   }
