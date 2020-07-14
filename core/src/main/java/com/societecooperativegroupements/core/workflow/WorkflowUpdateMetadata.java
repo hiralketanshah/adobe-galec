@@ -51,7 +51,7 @@ public class WorkflowUpdateMetadata implements WorkflowProcess {
 
 	private final String patternfilename4 = "^([a-zA-Z0-9])*-([a-zA-Z0-9])*-([a-zA-Z0-9])*-([0-9]{1,4}x[0-9]{1,4})*-([0-9]{1,2})$";        
 
-	private final String userlogin="oauthservice";
+	private final String userlogin="content-writer-service";
 	@Override
 	public void execute(WorkItem workItem, WorkflowSession workflowSession, MetaDataMap metaDataMap) throws WorkflowException {
 		try {
