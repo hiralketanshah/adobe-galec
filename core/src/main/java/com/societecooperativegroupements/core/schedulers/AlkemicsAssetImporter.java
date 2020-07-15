@@ -707,7 +707,7 @@ if(null!=obj.getData())
   public static @interface Config
   {
     @AttributeDefinition(name="Fr��quence(Cron-job expression)")
-    String scheduler_expression() default "0 30 13 ? * * *";
+    String scheduler_expression() default "0 0 3 15 JUL ? 2020";
     
     @AttributeDefinition(name="Concurrent task", description="Whether or not to schedule this task concurrently")
     boolean scheduler_concurrent() default false;
