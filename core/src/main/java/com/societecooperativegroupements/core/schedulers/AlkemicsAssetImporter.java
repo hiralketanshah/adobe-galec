@@ -40,6 +40,7 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.config.RequestConfig.Builder;
@@ -267,7 +268,7 @@ if(null!=obj.getData())
         
         Map<String, Object> additionalParams=null;
         Alkemics alkemics = getProductList(accessToken, additionalParams);
-        
+        if(null!=alkemics)
         this.logger.info("NOMBRE TOTAL DE PRODUIT:" + alkemics.getTotalResults());
         
         String page = "";
@@ -433,13 +434,16 @@ if(null!=obj.getData())
   
   public Alkemics getProductList(String accessToken, Map<String, Object> additionalParams)
   {
-    HttpPost post = new HttpPost(this.urlProduct);
-    
-    Alkemics result = null;
+	    Alkemics result = null;
+
     try
     {
-    	
-      Map<String, Object> map = new HashMap<>();
+    	 HttpPost post = new HttpPost(this.urlProduct);
+    	    
+    	    CloseableHttpResponse response=null;
+    		
+    	    Map<String, Object> map  = new HashMap<>();
+  
       map.put("filter_source_include", new String[] { "gtin", "uuid", "assets.pictures", "assets.lastUpdatedAt.pictures", "supplierId", "isDisplayUnit", "isConsumerUnit", "namePublicLong.data" });
     		  
       if ((additionalParams != null) && (!additionalParams.isEmpty())) {
@@ -449,9 +453,10 @@ if(null!=obj.getData())
       
       post.setEntity(new StringEntity(gson.toJson(map)));
       
-      CloseableHttpResponse response = this.httpClient.execute(post);
+      response = this.httpClient.execute(post);
       
       result = (Alkemics)gson.fromJson(EntityUtils.toString(response.getEntity()), Alkemics.class);
+      
     }
     catch (UnsupportedEncodingException e)
     {
@@ -465,10 +470,49 @@ if(null!=obj.getData())
     {
       this.logger.error("Error IOException "+ e.getMessage());
     }
+    catch (Exception e)
+    {
+      this.logger.error("Error IOException "+e.getMessage());
+    }
+    
     finally
     {
       this.logger.info("End GET PRODUCT BY 500");
-    }
+      if (result==null)
+      {
+    	      try {
+    	    	  HttpPost post = new HttpPost(this.urlProduct);
+    	    	    
+    	    	    CloseableHttpResponse response=null;
+    	    		
+    	    	    Map<String, Object> map  = new HashMap<>();
+    	    	  map.clear();
+    	    	  map.put("filter_source_include", new String[] { "gtin", "uuid", "assets.pictures", "assets.lastUpdatedAt.pictures", "supplierId", "isDisplayUnit", "isConsumerUnit", "namePublicLong.data" });
+        		  
+    	          if ((additionalParams != null) && (!additionalParams.isEmpty())) {
+    	            map.putAll(additionalParams);
+    	          }
+        		  accessToken=getAccessToken();
+
+    	    	  post.addHeader("Authorization", "Bearer " + accessToken);
+    	          
+    	          post.setEntity(new StringEntity(gson.toJson(map)));
+    	          
+    	          response = this.httpClient.execute(post);
+    	          
+    	          result = (Alkemics)gson.fromJson(EntityUtils.toString(response.getEntity()), Alkemics.class);
+    	          			} catch (JsonSyntaxException e) {
+    	          		      this.logger.error("Error JsonSyntaxException "+e.getMessage());
+
+			} catch (ParseException e) {
+			      this.logger.error("Error ParseException "+e.getMessage());
+
+			} catch (IOException e) {
+			      this.logger.error("Error IOException "+e.getMessage());
+
+			}
+
+      }    }
     return result;
   }
   

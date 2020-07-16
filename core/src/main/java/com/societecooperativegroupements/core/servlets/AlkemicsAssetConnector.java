@@ -505,40 +505,87 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 		}
 	}
 
-	public Alkemics getProductList(String accessToken, Map<String, Object> additionalParams) {
-		HttpPost post = new HttpPost(this.urlProduct);
+	 public Alkemics getProductList(String accessToken, Map<String, Object> additionalParams)
+	  {
+		    Alkemics result = null;
 
-		Alkemics result = null;
-		try {
+	    try
+	    {
+	    	 HttpPost post = new HttpPost(this.urlProduct);
+	    	    
+	    	    CloseableHttpResponse response=null;
+	    		
+	    	    Map<String, Object> map  = new HashMap<>();
+	  
+	      map.put("filter_source_include", new String[] { "gtin", "uuid", "assets.pictures", "assets.lastUpdatedAt.pictures", "supplierId", "isDisplayUnit", "isConsumerUnit", "namePublicLong.data" });
+	    		  
+	      if ((additionalParams != null) && (!additionalParams.isEmpty())) {
+	        map.putAll(additionalParams);
+	      }
+	      post.addHeader("Authorization", "Bearer " + accessToken);
+	      
+	      post.setEntity(new StringEntity(gson.toJson(map)));
+	      
+	      response = this.httpClient.execute(post);
+	      
+	      result = (Alkemics)gson.fromJson(EntityUtils.toString(response.getEntity()), Alkemics.class);
+	      
+	    }
+	    catch (UnsupportedEncodingException e)
+	    {
+	      this.logger.error("Error UnsupportedEncodingException "+ e.getMessage());
+	    }
+	    catch (ClientProtocolException e)
+	    {
+	      this.logger.error("Error ClientProtocolException" + e.getMessage());
+	    }
+	    catch (IOException e)
+	    {
+	      this.logger.error("Error IOException "+ e.getMessage());
+	    }
+	    catch (Exception e)
+	    {
+	      this.logger.error("Error IOException "+e.getMessage());
+	    }
+	    
+	    finally
+	    {
+	      this.logger.info("End GET PRODUCT BY 500");
+	      if (result==null)
+	      {
+	    	      try {
+	    	    	  HttpPost post = new HttpPost(this.urlProduct);
+	    	    	    
+	    	    	    CloseableHttpResponse response=null;
+	    	    		
+	    	    	    Map<String, Object> map  = new HashMap<>();
+	    	    	  map.clear();
+	    	    	  map.put("filter_source_include", new String[] { "gtin", "uuid", "assets.pictures", "assets.lastUpdatedAt.pictures", "supplierId", "isDisplayUnit", "isConsumerUnit", "namePublicLong.data" });
+	        		  
+	    	          if ((additionalParams != null) && (!additionalParams.isEmpty())) {
+	    	            map.putAll(additionalParams);
+	    	          }
+	        		  accessToken=getAccessToken();
 
-			Map<String, Object> map = new HashMap<>();
-			map.put("filter_source_include",
-					new String[] { "gtin", "uuid", "assets.pictures", "assets.lastUpdatedAt.pictures", "supplierId",
-							"isDisplayUnit", "isConsumerUnit", "namePublicLong.data" });
+	    	    	  post.addHeader("Authorization", "Bearer " + accessToken);
+	    	          
+	    	          post.setEntity(new StringEntity(gson.toJson(map)));
+	    	          
+	    	          response = this.httpClient.execute(post);
+	    	          
+	    	          result = (Alkemics)gson.fromJson(EntityUtils.toString(response.getEntity()), Alkemics.class);
+	    	          			} catch (JsonSyntaxException e) {
+	    	          		      this.logger.error("Error JsonSyntaxException "+e.getMessage());
 
-			if ((additionalParams != null) && (!additionalParams.isEmpty())) {
-				map.putAll(additionalParams);
-			}
-			post.addHeader("Authorization", "Bearer " + accessToken);
+				} catch (IOException e) {
+				      this.logger.error("Error IOException "+e.getMessage());
 
-			post.setEntity(new StringEntity(gson.toJson(map)));
+				}
 
-			CloseableHttpResponse response = this.httpClient.execute(post);
-
-			result = (Alkemics) gson.fromJson(EntityUtils.toString(response.getEntity()), Alkemics.class);
-		} catch (UnsupportedEncodingException e) {
-			this.logger.error("Error ", e.getMessage());
-		} catch (ClientProtocolException e) {
-			this.logger.error("Error ", e.getMessage());
-		} catch (IOException e) {
-			this.logger.error("Error ", e.getMessage());
-		} catch (Exception e) {
-			this.logger.error("Error  ", e.getMessage());
-		} finally {
-			this.logger.debug("End get productList");
-		}
-		return result;
-	}
+	      }    }
+	    return result;
+	  }
+	  
 
 	public String getAccessToken() {
 		HttpPost post = new HttpPost(this.urlToken);
