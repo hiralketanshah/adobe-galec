@@ -710,7 +710,7 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 				}
 			}
 			long waitedTime = System.currentTimeMillis() - startWaitingTime;
-			if (waitedTime > 60000000L) {
+			if (waitedTime > 600000) {
 				this.logger.info("Stop waiting for asset processing {}",
 						Integer.valueOf(this.activeAssetResources.size()));
 				this.activeAssetResources.clear();

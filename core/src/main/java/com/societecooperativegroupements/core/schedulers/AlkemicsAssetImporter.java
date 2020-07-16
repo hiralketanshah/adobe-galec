@@ -586,7 +586,7 @@ if(null!=obj.getData())
      resolver.commit();
       
    // resolver.refresh();
-    //  adminSession.save();
+      adminSession.save();
       
       
       this.activeAssetResources.add(assetResource);
@@ -692,7 +692,7 @@ if(null!=obj.getData())
         }
       }
       long waitedTime = System.currentTimeMillis() - startWaitingTime;
-      if (waitedTime > 60000000)
+      if (waitedTime > 600000)
       {
         this.logger.info("Stop waiting for asset processing {}", Integer.valueOf(this.activeAssetResources.size()));
         this.activeAssetResources.clear();
