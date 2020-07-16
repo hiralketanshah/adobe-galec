@@ -166,7 +166,6 @@ public class AlkemicsAssetImporter
 				Alkemics obj = getProductList(access_token, additionalParams);
 				if(null!=obj) {
 				
-			      Map<String, Object> map = Collections.singletonMap("filter_source_include", new String[] { "gtin", "uuid", "assets.pictures", "assets.lastUpdatedAt.pictures", "supplierId", "isDisplayUnit", "isConsumerUnit", "namePublicLong.data" });
 
 if(null!=obj.getData())
 {
@@ -305,11 +304,16 @@ if(null!=obj.getData())
 		
           while (endDate.compareTo(dateMin) > 0)
           {
+        	  this.logger.info("LA DATE :" + endDate);
             List<AkDatum> listeProduit = new ArrayList();
-            
-            readProductByDay(endDate, accessToken, page, numberProcessed, listeProduit);
+            page="";
+            String productAccessToken = getAccessToken();
+         
+            readProductByDay(endDate, productAccessToken, page, numberProcessed, listeProduit);
             numberAsset += listeProduit.size();
+            
 			this.logger.info("NOMBRE TOTAL D'ASSET : " + listeProduit.size() + " A LA DATE DU:" + endDate);
+			
             if (!this.dryRun)
             {
             int max = listeProduit.size();
@@ -389,7 +393,11 @@ if(null!=obj.getData())
                       
                       this.logger.info(" url: " + assetUrl);
                       
-                      writeToDam(name, gtin, assetUrl, hm, errorCase);
+                   try {
+					writeToDam(name, gtin, assetUrl, hm, errorCase);
+				} catch (InterruptedException e) {
+					this.logger.error("error writing dam"+e.getMessage());
+				}
                     
                   }
                   else {
@@ -409,16 +417,13 @@ if(null!=obj.getData())
             calendar.setTime(endDate);
             calendar.add(Calendar.DATE, -1);
             endDate = calendar.getTime();
-            this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset );
+            this.logger.info(" CUMUL D'ASSET TRAITES: " + numberAsset );
 
           }
         
       }
     }
-    catch (InterruptedException e)
-    {
-      this.logger.error("Erreur d'ecriture de Fichier " + e.getMessage());
-    }
+
   
   catch (java.text.ParseException e)
   {
@@ -450,23 +455,19 @@ if(null!=obj.getData())
     }
     catch (UnsupportedEncodingException e)
     {
-      this.logger.error("Error UnsupportedEncodingException ", e.getMessage());
+      this.logger.error("Error UnsupportedEncodingException "+ e.getMessage());
     }
     catch (ClientProtocolException e)
     {
-      this.logger.error("Error ClientProtocolException", e.getMessage());
+      this.logger.error("Error ClientProtocolException" + e.getMessage());
     }
     catch (IOException e)
     {
-      this.logger.error("Error IOException ", e.getMessage());
-    }
-    catch (Exception e)
-    {
-      this.logger.error("Error  ", e.getMessage());
+      this.logger.error("Error IOException "+ e.getMessage());
     }
     finally
     {
-      this.logger.info("End");
+      this.logger.info("End GET PRODUCT BY 500");
     }
     return result;
   }
@@ -532,13 +533,14 @@ if(null!=obj.getData())
     Map<String, Object> param = new HashMap();
     param.put("sling.service.subservice", "content-writer-service");
     ResourceResolver resolver = null;
+    Session adminSession = null ;
     try
     {
       inputStream = new URL(path).openStream();
       
       resolver = this.resolverFactory.getServiceResourceResolver(param);
       
-      Session adminSession = (Session)resolver.adaptTo(Session.class);
+       adminSession = (Session)resolver.adaptTo(Session.class);
       
       AssetManager assetMgr = (AssetManager)resolver.adaptTo(AssetManager.class);
       
@@ -598,42 +600,39 @@ if(null!=obj.getData())
 
       }
     }
-    catch (PersistenceException e1)
-    {
-      this.logger.error("Errror while getting resolve" + e1.getMessage());
-    }
+   
     catch (InterruptedException e)
     {
-      this.logger.error("Errror while getting resolve" + e.getMessage());
+      this.logger.error("Errror InterruptedException" + e.getMessage());
       throw e;
     }
     catch (ValueFormatException e)
     {
-      this.logger.error("Errror while getting resolve" + e.getMessage());
+      this.logger.error("Errror ValueFormatException" + e.getMessage());
     }
     catch (LockException e)
     {
-      this.logger.error("Errror while getting resolve" + e.getMessage());
+      this.logger.error("Errror LockExceptione" + e.getMessage());
     }
     catch (ConstraintViolationException e)
     {
-      this.logger.error("Errror while getting resolve" + e.getMessage());
+      this.logger.error("Errror ConstraintViolationException" + e.getMessage());
     }
     catch (RepositoryException e)
     {
-      this.logger.info("Errror while getting resolve" + e.getMessage());
+      this.logger.info("Errror RepositoryException" + e.getMessage());
     }
     catch (LoginException e)
     {
-      this.logger.error("Errror while getting resolve" + e.getMessage());
+      this.logger.error("Errror wLoginException" + e.getMessage());
     }
     catch (MalformedURLException e)
     {
-      this.logger.error("Errror while getting resolve" + e.getMessage());
+      this.logger.error("Errror MalformedURLException" + e.getMessage());
     }
     catch (IOException e)
     {
-      this.logger.error("Errror while getting resolve" + e.getMessage());
+      this.logger.error("Errror IOException" + e.getMessage());
     }
     finally
     {
@@ -650,6 +649,7 @@ if(null!=obj.getData())
      if ((resolver != null) && (resolver.isLive())) {
         resolver.close();
       }
+     adminSession.logout();
     }
 	  }
   }

@@ -392,8 +392,10 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 					
 					while (endDate.compareTo(dateMin) > 0) {
 						List<AkDatum> listeProduit = new ArrayList();
-
-						readProductByDay(endDate, accessToken, page, numberProcessed, listeProduit);
+						page="";
+			            String productAccessToken = getAccessToken();
+			         
+						readProductByDay(endDate, productAccessToken, page, numberProcessed, listeProduit);
 						numberAsset += listeProduit.size();
 						this.logger.info("NOMBRE TOTAL D'ASSET : " + listeProduit.size() + " A LA DATE DU:" + endDate);
 
