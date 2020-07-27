@@ -236,24 +236,24 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 		resp.getWriter().write("Leclerc servlet END");
 	}
 
-	private void readProductByDay(Date endDate, String access_token, String page, long numberProcessed,
+	private void readProductByDay(Date startDate, String access_token, String page, long numberProcessed,
 			List<AkDatum> listeProduit) {
 
 		int max = 0;
 		List<AkDatum> returnedProduct = null;
-		logger.info("Product in process" + endDate);
+		logger.info("Product in process" + startDate);
 
 		do {
 			int limit = 500;
 
 			Calendar calendar = Calendar.getInstance();
-			calendar.setTime(endDate);
-			long endtime = endDate.getTime();
+			calendar.setTime(startDate);
+			long startime = startDate.getTime();
 
-			calendar.add(Calendar.DATE, -1);
+			calendar.add(Calendar.DATE, 1);
 
-			Date dayBefore = calendar.getTime();
-			long startime = dayBefore.getTime();
+			Date dayAfter = calendar.getTime();
+			long endtime = dayAfter.getTime();
 
 			HashMap<String, Object> additionalParams = new HashMap<>();
 			additionalParams.put("updated_at_from", startime);
@@ -293,7 +293,7 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 								"NOMBRE DE PRODUIT LUS: " + numberProcessed + "SUR  UN TOTAL " + obj.getTotalResults());
 						logger.info("NOMBRE DE PRODUIT AVEC DES IMAGES " + listeProduit.size());
 
-						readProductByDay(endDate, access_token, page, numberProcessed, listeProduit);
+						readProductByDay(startDate, access_token, page, numberProcessed, listeProduit);
 
 					}
 				}
@@ -366,18 +366,16 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 
 				SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
 				Date endDate = null;
-				Date dateMin = null;
+				Date startDate = null;
 				if (this.init) {
-					
 						if(endDateEntry==null)
 						 endDateEntry = "01-07-2020";
-						if(dateMin==null)
-
-							startDateEntry = "28-06-2019";
+						if(startDateEntry==null)
+startDateEntry = "28-06-2019";
 						
 						endDate = format.parse(endDateEntry);
 
-						dateMin = format.parse(startDateEntry);
+						startDate = format.parse(startDateEntry);
 						
 				}
 					else
@@ -386,18 +384,20 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 
 						calendar.setTime(endDate);
 						calendar.add(Calendar.DATE, -1);
-						dateMin=calendar.getTime();
+						startDate=calendar.getTime();
 					}
 					
 					
-					while (endDate.compareTo(dateMin) > 0) {
+					while (endDate.compareTo(startDate) > 0) {
 						List<AkDatum> listeProduit = new ArrayList();
 						page="";
 			            String productAccessToken = getAccessToken();
 			         
-						readProductByDay(endDate, productAccessToken, page, numberProcessed, listeProduit);
+						readProductByDay(startDate, productAccessToken, page, numberProcessed, listeProduit);
+
+						//readProductByDay(endDate, productAccessToken, page, numberProcessed, listeProduit);
 						numberAsset += listeProduit.size();
-						this.logger.info("NOMBRE TOTAL D'ASSET : " + listeProduit.size() + " A LA DATE DU:" + endDate);
+						this.logger.info("NOMBRE TOTAL D'ASSET : " + listeProduit.size() + " A LA DATE DU:" + startDate);
 
 						if (!this.dryRun) {
 							int max = listeProduit.size();
@@ -489,9 +489,9 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 							this.logger.info("DRY RUN: running by day");
 
 						}
-						calendar.setTime(endDate);
-						calendar.add(Calendar.DATE, -1);
-						endDate = calendar.getTime();
+						calendar.setTime(startDate);
+						calendar.add(Calendar.DATE, 1);
+						startDate = calendar.getTime();
 						this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset );
 
 					}

@@ -59,6 +59,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.api.resource.ResourceUtil;
 import org.apache.sling.api.resource.ValueMap;
+import org.kohsuke.rngom.rngparser.digested.DTextPattern;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -138,31 +139,30 @@ public class AlkemicsAssetImporter
   private long Totaltimefor1000 = 0L;
   private int existingAsset;
   
-  private void readProductByDay(Date endDate, String access_token, String page, long numberProcessed,
+  private void readProductByDay(Date startDate, String access_token, String page, long numberProcessed,
 			List<AkDatum> listeProduit) {
-		
-			int max = 0;
-			List<AkDatum> returnedProduct = null;
-			logger.debug("Product in process" + endDate);
 
-			do {
-				int limit = 500;
+		int max = 0;
+		List<AkDatum> returnedProduct = null;
+		logger.info("Product in process" + startDate);
 
-				Calendar calendar = Calendar.getInstance();
-				calendar.setTime(endDate);
-				long endtime = endDate.getTime();
+		do {
+			int limit = 500;
 
-				calendar.add(Calendar.DATE, -1);
+			Calendar calendar = Calendar.getInstance();
+			calendar.setTime(startDate);
+			long startime = startDate.getTime();
 
-				Date dayBefore = calendar.getTime();
-				long startime = dayBefore.getTime();
+			calendar.add(Calendar.DATE, 1);
 
-				HashMap<String, Object> additionalParams = new HashMap<>();
-				additionalParams.put("updated_at_from", startime);
-				additionalParams.put("updated_at_to", endtime);
-				additionalParams.put("limit", limit);
-				additionalParams.put("next_page", page);
-				
+			Date dayAfter = calendar.getTime();
+			long endtime = dayAfter.getTime();
+
+			HashMap<String, Object> additionalParams = new HashMap<>();
+			additionalParams.put("updated_at_from", startime);
+			additionalParams.put("updated_at_to", endtime);
+			additionalParams.put("limit", limit);
+			additionalParams.put("next_page", page);
 
 				Alkemics obj = getProductList(access_token, additionalParams);
 				if(null!=obj) {
@@ -194,7 +194,7 @@ if(null!=obj.getData())
 							"NOMBRE DE PRODUIT LUS: " + numberProcessed + "SUR  UN TOTAL " + obj.getTotalResults());
 					logger.debug("NOMBRE DE PRODUIT AVEC DES IMAGES " + listeProduit.size());
 
-					readProductByDay(endDate, access_token, page, numberProcessed, listeProduit);
+					readProductByDay(startDate, access_token, page, numberProcessed, listeProduit);
 
 				}}
 				}
@@ -310,10 +310,10 @@ if(null!=obj.getData())
             page="";
             String productAccessToken = getAccessToken();
          
-            readProductByDay(endDate, productAccessToken, page, numberProcessed, listeProduit);
+            readProductByDay(dateMin, productAccessToken, page, numberProcessed, listeProduit);
             numberAsset += listeProduit.size();
             
-			this.logger.info("NOMBRE TOTAL D'ASSET : " + listeProduit.size() + " A LA DATE DU:" + endDate);
+			this.logger.info("NOMBRE TOTAL D'ASSET : " + listeProduit.size() + " A LA DATE DU:" + dateMin);
 			
             if (!this.dryRun)
             {
@@ -415,9 +415,9 @@ if(null!=obj.getData())
                 this.logger.info("DRY RUN: running by day" );
 
             }
-            calendar.setTime(endDate);
-            calendar.add(Calendar.DATE, -1);
-            endDate = calendar.getTime();
+            calendar.setTime(dateMin);
+            calendar.add(Calendar.DATE, 1);
+            dateMin = calendar.getTime();
             this.logger.info(" CUMUL D'ASSET TRAITES: " + numberAsset );
 
           }
@@ -694,7 +694,8 @@ if(null!=obj.getData())
         resolver.close();
       }
      adminSession.logout();
-    }
+     
+}
 	  }
   }
 
