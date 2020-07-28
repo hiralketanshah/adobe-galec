@@ -280,41 +280,45 @@ if(null!=obj.getData())
         
         this.logger.info("STARTING TO READ PRODUCT DAY BY DAY");
         
-        SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
-        Date endDate = null;
-        Date dateMin = null;
-        if (this.init)
-        {
-          
-           //String endDateEntry = "01-07-2020";
-            
-          //  String dateMinEntry = "28-06-2019";
-            endDate = format.parse(endDateEntry);
-            
-            dateMin = format.parse(startDateEntry);
-         
-        } 
-      	else
-		{
-			endDate=new java.util.Date();  
 
-			calendar.setTime(endDate);
-			calendar.add(Calendar.DATE, -1);
-			dateMin=calendar.getTime();
+		SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
+		Date endDate = null;
+		Date startDate = null;
+		if (this.init) {
+				if(endDateEntry==null)
+				 endDateEntry = "01-07-2020";
+				if(startDateEntry==null)
+startDateEntry = "28-06-2019";
+				
+				endDate = format.parse(endDateEntry);
+
+				startDate = format.parse(startDateEntry);
+				
 		}
+			else
+			{
+				endDate=new java.util.Date();  
+
+				calendar.setTime(endDate);
+				calendar.add(Calendar.DATE, -1);
+				startDate=calendar.getTime();
+			}
 		
-          while (endDate.compareTo(dateMin) > 0)
-          {
-        	  this.logger.info("LA DATE :" + endDate);
-            List<AkDatum> listeProduit = new ArrayList();
-            page="";
+        while (endDate.compareTo(startDate) > 0) {
+			List<AkDatum> listeProduit = new ArrayList();
+			page="";
             String productAccessToken = getAccessToken();
-         
-            readProductByDay(dateMin, productAccessToken, page, numberProcessed, listeProduit);
-            numberAsset += listeProduit.size();
-            
-			this.logger.info("NOMBRE TOTAL D'ASSET : " + listeProduit.size() + " A LA DATE DU:" + dateMin);
+            calendar.setTime(startDate);
+			calendar.add(Calendar.DATE, -1);
+			Date currentDate = calendar.getTime();
 			
+			this.logger.info("PRODUIT EN COURS DE TRAITEMENT ENTRE:" + startDate+ "ET LE" +currentDate);
+
+			readProductByDay(startDate, productAccessToken, page, numberProcessed, listeProduit);
+
+			//readProductByDay(endDate, productAccessToken, page, numberProcessed, listeProduit);
+			numberAsset += listeProduit.size();
+		
             if (!this.dryRun)
             {
             int max = listeProduit.size();
@@ -415,10 +419,10 @@ if(null!=obj.getData())
                 this.logger.info("DRY RUN: running by day" );
 
             }
-            calendar.setTime(dateMin);
-            calendar.add(Calendar.DATE, 1);
-            dateMin = calendar.getTime();
-            this.logger.info(" CUMUL D'ASSET TRAITES: " + numberAsset );
+            calendar.setTime(startDate);
+			calendar.add(Calendar.DATE, 1);
+			startDate = calendar.getTime();
+			this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset );
 
           }
         

@@ -392,7 +392,12 @@ startDateEntry = "28-06-2019";
 						List<AkDatum> listeProduit = new ArrayList();
 						page="";
 			            String productAccessToken = getAccessToken();
-			         
+			            calendar.setTime(startDate);
+						calendar.add(Calendar.DATE, -1);
+						Date currentDate = calendar.getTime();
+						
+						this.logger.info("PRODUIT EN COURS DE TRAITEMENT ENTRE:" + startDate+ "ET LE" +currentDate);
+
 						readProductByDay(startDate, productAccessToken, page, numberProcessed, listeProduit);
 
 						//readProductByDay(endDate, productAccessToken, page, numberProcessed, listeProduit);
