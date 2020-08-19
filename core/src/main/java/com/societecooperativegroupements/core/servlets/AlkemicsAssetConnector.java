@@ -256,8 +256,8 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 			long endtime = dayAfter.getTime();
 
 			HashMap<String, Object> additionalParams = new HashMap<>();
-			additionalParams.put("updated_at_from", startime);
-			additionalParams.put("updated_at_to", endtime);
+			additionalParams.put("filter_pictures_last_updated_at_from", startime);
+			additionalParams.put("filter_pictures_last_updated_at_to", endtime);
 			additionalParams.put("limit", limit);
 			additionalParams.put("next_page", page);
 
