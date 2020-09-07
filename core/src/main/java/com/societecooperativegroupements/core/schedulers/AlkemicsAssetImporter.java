@@ -62,6 +62,7 @@ import org.apache.sling.api.resource.ValueMap;
 import org.kohsuke.rngom.rngparser.digested.DTextPattern;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
@@ -101,6 +102,7 @@ public class AlkemicsAssetImporter
   }
   
   @Activate
+  @Modified
   protected void activate(Config config)
   {
     this.logger.info("AlkemicsAssetImporter activation");
@@ -137,7 +139,7 @@ public class AlkemicsAssetImporter
   private String urlToken = "https://apis.alkemics.com/auth/v2/token";
   private String urlProduct = "https://apis.alkemics.com/public/v1/products/list";
   private long Totaltimefor1000 = 0L;
-  private int existingAsset;
+//  private int existingAsset;
   
   private void readProductByDay(Date startDate, String access_token, String page, long numberProcessed,
 			List<AkDatum> listeProduit) {
@@ -145,18 +147,20 @@ public class AlkemicsAssetImporter
 		int max = 0;
 		List<AkDatum> returnedProduct = null;
 		logger.info("Product in process" + startDate);
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(startDate);
+		long startime = startDate.getTime();
+
+
+		calendar.add(Calendar.DATE, 1);
+		Date dayAfter = calendar.getTime();
+		long endtime = dayAfter.getTime();
 
 		do {
 			int limit = 500;
 
-			Calendar calendar = Calendar.getInstance();
-			calendar.setTime(startDate);
-			long startime = startDate.getTime();
-
-			calendar.add(Calendar.DATE, 1);
-
-			Date dayAfter = calendar.getTime();
-			long endtime = dayAfter.getTime();
+			
+			
 
 			HashMap<String, Object> additionalParams = new HashMap<>();
 			additionalParams.put("filter_pictures_last_updated_at_from", startime);
@@ -610,8 +614,8 @@ startDateEntry = "28-06-2019";
       if (assetExist != null)
       {
         this.logger.info("CET ASSET EXISTE DEJA");
-        this.existingAsset += 1;
-        this.logger.info("Nombre d'asset en double :" + this.existingAsset);
+    //    this.existingAsset += 1;
+   //     this.logger.info("Nombre d'asset en double :" + this.existingAsset);
       }
       long startTime = new Date().getTime();
       assetMgr.createAsset(newFile, inputStream, "image/jpeg", true);
