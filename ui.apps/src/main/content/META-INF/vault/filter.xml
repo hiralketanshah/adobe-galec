@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workspaceFilter version="1.0">
     <filter root="/apps/societecooperativegroupements"/>
-    <filter root="/apps/dam/gui/content/assetdetails/jcr:content/actions/smartcrop/data"/>
+    <filter root="/apps/dam/gui/content/assetdetails"/>
     
 </workspaceFilter>
