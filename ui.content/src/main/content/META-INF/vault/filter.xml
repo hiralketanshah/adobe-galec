@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workspaceFilter version="1.0">
-    <filter root="/conf/societecooperativegroupements" mode="merge"/>
-    <filter root="/content/societecooperativegroupements" mode="merge"/>
-    <filter root="/content/dam/societecooperativegroupements" mode="merge"/>
-    <filter root="/content/experience-fragments/societecooperativegroupements" mode="merge"/>
-    
-     <filter root="/conf/global/settings/dam/adminui-extension/metadataschema/Leclerc_Metadata_Produit" mode="merge"/>
-    <filter root="/conf/global/settings/dam/adminui-extension/metadataschema/Leclerc_Studio_Crea" mode="merge"/>
-    <filter root="/content/dam/dam/usage-interne/produit/jcr:content" mode="merge"/>
-    <filter root="/content/dam/dam/studio-crea/jcr:content" mode="merge"/>
-    <filter root="/conf/global/settings/dam/adminui-extension/metadataschema/Leclerc_Metadata_Produit" mode="merge"/>
-    <filter root="/content/dam/dam/usage-interne/Produits/jcr:content" mode="merge"/>
-    <filter root="/content/dam/dam/usage-interne/Erreur-Produits/jcr:content" mode="merge"/>
+   <!--   <filter root="/conf/societecooperativegroupements" mode="merge"/>
+    <filter root="/conf/global/settings/dam/adminui-extension/metadataschema/Leclerc_Metadata_Produit"/>
+    <filter root="/conf/global/settings/dam/adminui-extension/metadataschema/Leclerc_Studio_Crea"/>
+    <filter root="/content/dam/dam/usage-interne/produit/jcr:content"/>
+    <filter root="/content/dam/dam/studio-crea/jcr:content"/>
+    <filter root="/conf/global/settings/dam/adminui-extension/metadataschema/Leclerc_Metadata_Produit"/>
+    <filter root="/content/dam/dam/usage-interne/Produits/jcr:content"/>
+    <filter root="/content/dam/dam/usage-interne/Erreur-Produits/jcr:content"/>
+    <filter root="/content/cq:tags/leclerc"/>-->
 </workspaceFilter>
