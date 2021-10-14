@@ -11,7 +11,6 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -486,7 +485,6 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
 
     public Alkemics getProductList(String accessToken, Map<String, Object> additionalParams) {
         Alkemics result = null;
-
         try {
             HttpGet httpGet = new HttpGet(this.urlProduct);
             List nameValuePairs = new ArrayList();
@@ -500,10 +498,8 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
                     .addParameters(nameValuePairs)
                     .build();
             ((HttpRequestBase) httpGet).setURI(uri);
-
-            CloseableHttpResponse response = null;
             httpGet.addHeader("Authorization", "Bearer " + accessToken);
-            response = this.httpClient.execute(httpGet);
+            CloseableHttpResponse response = this.httpClient.execute(httpGet);
             result = (Alkemics) gson.fromJson(EntityUtils.toString(response.getEntity()), Alkemics.class);
 
         } catch (UnsupportedEncodingException e) {
@@ -532,19 +528,15 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
                             .build();
                     ((HttpRequestBase) httpGet).setURI(uri);
                     accessToken = getAccessToken();
-
                     httpGet.addHeader("Authorization", "Bearer " + accessToken);
                     response = this.httpClient.execute(httpGet);
-
                     result = (Alkemics) gson.fromJson(EntityUtils.toString(response.getEntity()), Alkemics.class);
                 } catch (JsonSyntaxException e) {
                     this.logger.error("Error JsonSyntaxException " + e.getMessage());
 
                 } catch (IOException | URISyntaxException e) {
                     this.logger.error("Error IOException " + e.getMessage());
-
                 }
-
             }
         }
         return result;
