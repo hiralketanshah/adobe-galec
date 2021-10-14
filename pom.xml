@@ -25,6 +25,7 @@
         <module>all</module>
         <module>core</module>
         <module>ui.apps</module>
+        <module>ui.content</module>
         <module>repository-structure</module>
         <module>dispatcher</module>
   </modules>
