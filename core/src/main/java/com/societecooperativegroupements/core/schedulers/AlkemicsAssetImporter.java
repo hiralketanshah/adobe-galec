@@ -658,7 +658,7 @@ public class AlkemicsAssetImporter
         }
     }
 
-    @ObjectClassDefinition(name = "A scheduled task", description = "Simple demo for cron-job like task with properties")
+    @ObjectClassDefinition(name = "Alkemics Asset importer", description = "Societe Cooperative Groupements d Achats des Centres Leclerc Asset importer configuration.")
     public static @interface Config {
         @AttributeDefinition(name = "Fr��quence(Cron-job expression)")
         String scheduler_expression() default "0 0 3 15 JUL ? 2020";
