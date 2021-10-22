@@ -23,7 +23,7 @@
     <parent>
         <groupId>com.societecooperativegroupements</groupId>
         <artifactId>aem-societecooperativegroupements-project</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>0.0.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -59,7 +59,7 @@
                         <dependency>
                             <groupId>com.societecooperativegroupements</groupId>
                             <artifactId>aem-societecooperativegroupements-project.ui.apps</artifactId>
-                            <version>0.0.1-SNAPSHOT</version>
+                            <version>0.0.2-SNAPSHOT</version>
                         </dependency>
                     </dependencies>
                 </configuration>
@@ -83,12 +83,12 @@
         <dependency>
             <groupId>com.societecooperativegroupements</groupId>
             <artifactId>aem-societecooperativegroupements-project.core</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>0.0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.societecooperativegroupements</groupId>
             <artifactId>aem-societecooperativegroupements-project.ui.apps</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>0.0.2-SNAPSHOT</version>
             <type>zip</type>
         </dependency>
         <dependency>

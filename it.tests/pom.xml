@@ -23,7 +23,7 @@
     <parent>
         <groupId>com.societecooperativegroupements</groupId>
         <artifactId>aem-societecooperativegroupements-project</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>0.0.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -134,7 +134,7 @@ Sling-Test-Regexp: .*Test
         <dependency>
             <groupId>com.societecooperativegroupements</groupId>
             <artifactId>aem-societecooperativegroupements-project.core</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>0.0.2-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 
