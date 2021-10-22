@@ -138,7 +138,7 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
         super();
 
         this.urlToken = "https://apis.alkemics.com/auth/v2/token";
-        this.urlProduct = "https://apis.alkemics.com/public/v1/products/list";
+        this.urlProduct = "https://apis.alkemics.com/public/v1/products";
         this.clientSecret = "2ec38afd06779df1589f0cdc7e8c96ebd125c3d2";
         this.clientId = "c93f01db283fbfd893476d6deaab37f38c8a6440";
         activeAssetResources = new ArrayList<>();
