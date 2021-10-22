@@ -1,6 +1,7 @@
 
 package com.societecooperativegroupements.core.models.alkemics;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,12 +25,12 @@ public class Specializes {
 
     @JsonProperty("isIdentifiedBy")
     public List<IsIdentifiedBy> getIsIdentifiedBy() {
-        return isIdentifiedBy;
+        return isIdentifiedBy != null ? new ArrayList<>(isIdentifiedBy) : null;
     }
 
     @JsonProperty("isIdentifiedBy")
     public void setIsIdentifiedBy(List<IsIdentifiedBy> isIdentifiedBy) {
-        this.isIdentifiedBy = isIdentifiedBy;
+        this.isIdentifiedBy = isIdentifiedBy != null ? new ArrayList<>(isIdentifiedBy) : null;
     }
 
     @JsonAnyGetter

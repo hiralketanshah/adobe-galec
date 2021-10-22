@@ -1,6 +1,7 @@
 
 package com.societecooperativegroupements.core.models.alkemics;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,12 +127,12 @@ public class AkDatum {
 
     @JsonProperty("expressedIn")
     public List<ExpressedIn> getExpressedIn() {
-        return expressedIn;
+        return expressedIn != null ? new ArrayList<>(expressedIn) : null;
     }
 
     @JsonProperty("expressedIn")
     public void setExpressedIn(List<ExpressedIn> expressedIn) {
-        this.expressedIn = expressedIn;
+        this.expressedIn = expressedIn  != null ? new ArrayList<>(expressedIn) : null;
     }
 
     @JsonProperty("unitType")
@@ -245,12 +246,12 @@ public class AkDatum {
 
     @JsonProperty("namePublicLong")
     public List<NamePublicLong> getNamePublicLong() {
-        return namePublicLong;
+        return namePublicLong != null ? new ArrayList<>(namePublicLong) : null;
     }
 
     @JsonProperty("namePublicLong")
     public void setNamePublicLong(List<NamePublicLong> namePublicLong) {
-        this.namePublicLong = namePublicLong;
+        this.namePublicLong = namePublicLong !=  null ? new ArrayList<>(namePublicLong) : null;
     }
 
     @JsonProperty("lastUserHistoryDate")
@@ -304,12 +305,12 @@ public class AkDatum {
 
     @JsonProperty("description")
     public List<Description> getDescription() {
-        return description;
+        return description != null ? new ArrayList<>(description) : null;
     }
 
     @JsonProperty("description")
     public void setDescription(List<Description> description) {
-        this.description = description;
+        this.description = description != null ? new ArrayList<>(description) : null;
     }
 
     @JsonProperty("tags")
@@ -424,12 +425,12 @@ public class AkDatum {
 
     @JsonProperty("isLabeledBy")
     public List<IsLabeledBy> getIsLabeledBy() {
-        return isLabeledBy;
+        return isLabeledBy != null ? new ArrayList<>(isLabeledBy) : null;
     }
 
     @JsonProperty("isLabeledBy")
     public void setIsLabeledBy(List<IsLabeledBy> isLabeledBy) {
-        this.isLabeledBy = isLabeledBy;
+        this.isLabeledBy = isLabeledBy != null ? new ArrayList<>(isLabeledBy) : null;
     }
 
     @JsonAnyGetter

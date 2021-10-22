@@ -1,6 +1,7 @@
 
 package com.societecooperativegroupements.core.models.alkemics;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,12 +54,12 @@ public class Alkemics {
 
     @JsonProperty("data")
     public List<AkDatum> getData() {
-        return data;
+        return data != null ? new ArrayList<>(data) : null;
     }
 
     @JsonProperty("data")
     public void setData(List<AkDatum> data) {
-        this.data = data;
+        this.data = data != null ? new ArrayList<>(data) : null;
     }
 
     @JsonProperty("offset")

@@ -75,16 +75,16 @@ public class AlkemicsAsset {
 		this.vue = vue;
 	}
 	public Date getDateDebutValidite() {
-		return dateDebutValidite;
+		return dateDebutValidite != null ? new Date(dateDebutValidite.getTime()) : null;
 	}
 	public void setDateDebutValidite(Date dateDebutValidite) {
-		this.dateDebutValidite = dateDebutValidite;
+		this.dateDebutValidite = dateDebutValidite != null ? new Date(dateDebutValidite.getTime()) : null;
 	}
 	public Date getDateExpiration() {
-		return dateExpiration;
+		return dateExpiration != null ? new Date(dateExpiration.getTime()) : null;
 	}
 	public void setDateExpiration(Date dateExpiration) {
-		this.dateExpiration = dateExpiration;
+		this.dateExpiration = dateExpiration != null ? new Date(dateExpiration.getTime()) : null;
 	}
 	public String getUsageAutorise() {
 		return usageAutorise;

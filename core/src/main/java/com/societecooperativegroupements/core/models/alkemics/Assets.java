@@ -1,6 +1,7 @@
 
 package com.societecooperativegroupements.core.models.alkemics;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,12 +28,12 @@ public class Assets {
 
     @JsonProperty("pictures")
     public List<Picture> getPictures() {
-        return pictures;
+        return pictures != null ? new ArrayList<>(pictures) : null;
     }
 
     @JsonProperty("pictures")
     public void setPictures(List<Picture> pictures) {
-        this.pictures = pictures;
+        this.pictures = pictures != null ? new ArrayList<>(pictures) : null;
     }
 
     @JsonProperty("lastUpdatedAt")

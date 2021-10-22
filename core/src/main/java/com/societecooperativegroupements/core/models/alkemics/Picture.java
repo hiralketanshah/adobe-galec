@@ -1,6 +1,7 @@
 
 package com.societecooperativegroupements.core.models.alkemics;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -384,12 +385,12 @@ public class Picture {
 
     @JsonProperty("exportables")
     public List<Exportable> getExportables() {
-        return exportables;
+        return exportables != null ? new ArrayList<>(exportables) : null;
     }
 
     @JsonProperty("exportables")
     public void setExportables(List<Exportable> exportables) {
-        this.exportables = exportables;
+        this.exportables = exportables != null ? new ArrayList<>(exportables) : null;
     }
 
     @JsonProperty("isPackshot")

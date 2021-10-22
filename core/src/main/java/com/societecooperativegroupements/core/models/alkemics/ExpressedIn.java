@@ -1,6 +1,7 @@
 
 package com.societecooperativegroupements.core.models.alkemics;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,12 +38,12 @@ public class ExpressedIn {
 
     @JsonProperty("presentEntities")
     public List<PresentEntity> getPresentEntities() {
-        return presentEntities;
+        return presentEntities != null ? new ArrayList<>(presentEntities) : null;
     }
 
     @JsonProperty("presentEntities")
     public void setPresentEntities(List<PresentEntity> presentEntities) {
-        this.presentEntities = presentEntities;
+        this.presentEntities = presentEntities != null ? new ArrayList<>(presentEntities) : null;
     }
 
     @JsonAnyGetter
