@@ -94,7 +94,7 @@ public class AlkemicsAssetConnector extends SlingAllMethodsServlet implements Se
     private final transient Logger logger = LoggerFactory.getLogger(getClass());
 
     private String urlToken = "https://apis.alkemics.com/auth/v2/token";
-    private String urlProduct = "https://apis.alkemics.com/public/v1/products/list";
+    private String urlProduct = "https://apis.alkemics.com/public/v1/products";
     private boolean dryRun = false;
     private boolean init = true;
 

@@ -128,7 +128,7 @@ public class AlkemicsAssetImporter
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private String urlToken = "https://apis.alkemics.com/auth/v2/token";
-    private String urlProduct = "https://apis.alkemics.com/public/v1/products/list";
+    private String urlProduct = "https://apis.alkemics.com/public/v1/products";
     private long Totaltimefor1000 = 0L;
 //  private int existingAsset;
 
