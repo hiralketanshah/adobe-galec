@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.societecooperativegroupements.core.models.AlkemicsAssetImporterConfiguration;
 import com.societecooperativegroupements.core.models.alkemics.AkDatum;
 import com.societecooperativegroupements.core.models.alkemics.Alkemics;
 import com.societecooperativegroupements.core.models.alkemics.NamePublicLong;
@@ -15,10 +16,7 @@ import com.societecooperativegroupements.core.models.alkemics.Picture;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -37,19 +35,10 @@ import javax.jcr.nodetype.ConstraintViolationException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.ParseException;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.osgi.services.HttpClientBuilderFactory;
-import org.apache.http.util.EntityUtils;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -60,13 +49,11 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
-import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Designate(ocd = AlkemicsAssetImporter.Config.class)
+@Designate(ocd = AlkemicsAssetImporterConfiguration.class)
 @Component(service = Runnable.class)
 public class AlkemicsAssetImporter
         implements Runnable {
@@ -97,7 +84,7 @@ public class AlkemicsAssetImporter
 
     @Activate
     @Modified
-    protected void activate(Config config) {
+    protected void activate(AlkemicsAssetImporterConfiguration config) {
         this.logger.info("AlkemicsAssetImporter activation");
         HttpClientBuilder builder = this.httpClientBuilderFactory.newBuilder();
 
@@ -127,11 +114,17 @@ public class AlkemicsAssetImporter
     }
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private String urlToken = "https://apis.alkemics.com/auth/v2/token";
-    private String urlProduct = "https://apis.alkemics.com/public/v1/products";
     private long Totaltimefor1000 = 0L;
-//  private int existingAsset;
 
+    /**
+     * Method will retriev assets from Alkemics uploaded on current day.
+     *
+     * @param startDate
+     * @param access_token
+     * @param page
+     * @param numberProcessed
+     * @param listeProduit
+     */
     private void readProductByDay(Date startDate, String access_token, String page, long numberProcessed,
                                   List<AkDatum> listeProduit) {
 
@@ -175,14 +168,14 @@ public class AlkemicsAssetImporter
                                 listeProduit.add(currentProduct);
 
                             } else {
-                                logger.debug("Aucun Asset trouvé pour le produit" + currentProduct.getGtin());
+                                logger.debug("No Asset found for the product" + currentProduct.getGtin());
                             }
 
                         }
                         numberProcessed = numberProcessed + max;
                         logger.debug(
-                                "NOMBRE DE PRODUIT LUS: " + numberProcessed + "SUR  UN TOTAL " + obj.getTotalResults());
-                        logger.debug("NOMBRE DE PRODUIT AVEC DES IMAGES " + listeProduit.size());
+                                "NUMBER OF PRODUCTS PROCESSED: " + numberProcessed + "ON A TOTAL " + obj.getTotalResults());
+                        logger.debug("NUMBER OF PRODUCTS WITH IMAGES " + listeProduit.size());
 
                         readProductByDay(startDate, access_token, page, numberProcessed, listeProduit);
 
@@ -219,13 +212,13 @@ public class AlkemicsAssetImporter
                 currentProducts.addAll(obj.getData());
             }
         } catch (JsonParseException e) {
-            this.logger.error("Erreur  " + e.getMessage());
+            this.logger.error("Error  " + e.getMessage());
         } catch (JsonMappingException e) {
-            this.logger.error("Erreur  " + e.getMessage());
+            this.logger.error("Error  " + e.getMessage());
         } catch (IOException e) {
-            this.logger.error("Erreur  " + e.getMessage());
+            this.logger.error("Error  " + e.getMessage());
         } catch (LoginException e1) {
-            this.logger.error("Erreur  " + e1.getMessage());
+            this.logger.error("Error  " + e1.getMessage());
         } finally {
             if ((resolver != null) && (resolver.isLive())) {
                 resolver.close();
@@ -233,18 +226,23 @@ public class AlkemicsAssetImporter
         }
     }
 
+    /**
+     * Asset import process for the day.
+     *
+     * @param jsonPath
+     */
     public void importAsset(String jsonPath) {
         List<AkDatum> listeCurrentProduct = new ArrayList();
         try {
             if (jsonPath != null) {
                 readProduct(jsonPath, listeCurrentProduct);
             } else {
-                String accessToken = getAccessToken();
-
+                String accessToken = AlkemicsAssetImporterUtils.getAccessToken(this.alkemicsTokenUrl, this.clientId, this.clientSecret, httpClient);
                 Map<String, Object> additionalParams = null;
+                //TODO this call seems unwanted.
                 Alkemics alkemics = getProductList(accessToken, additionalParams);
                 if (null != alkemics)
-                    this.logger.info("NOMBRE TOTAL DE PRODUIT:" + alkemics.getTotalResults());
+                    this.logger.info("TOTAL NUMBER OF PRODUCT:" + alkemics.getTotalResults());
 
                 String page = "";
 
@@ -261,6 +259,7 @@ public class AlkemicsAssetImporter
                 Date startDate = null;
                 if (this.init) {
                     if (endDateEntry == null)
+                        //TODO use from config
                         endDateEntry = "01-07-2020";
                     if (startDateEntry == null)
                         startDateEntry = "28-06-2019";
@@ -280,15 +279,13 @@ public class AlkemicsAssetImporter
                 while (endDate.compareTo(startDate) > 0) {
                     List<AkDatum> listeProduit = new ArrayList();
                     page = "";
-                    String productAccessToken = getAccessToken();
+                    String productAccessToken = AlkemicsAssetImporterUtils.getAccessToken(this.alkemicsTokenUrl, this.clientId, this.clientSecret, httpClient);;
                     calendar.setTime(startDate);
                     calendar.add(Calendar.DATE, -1);
                     Date currentDate = calendar.getTime();
 
-                    this.logger.info("PRODUIT EN COURS DE TRAITEMENT ENTRE:" + startDate + "ET LE" + currentDate);
-
+                    this.logger.info("PRODUCT UNDER PROCESSING BETWEEN:" + startDate + "ET LE" + currentDate);
                     readProductByDay(startDate, productAccessToken, page, numberProcessed, listeProduit);
-
                     //readProductByDay(endDate, productAccessToken, page, numberProcessed, listeProduit);
                     numberAsset += listeProduit.size();
 
@@ -369,11 +366,11 @@ public class AlkemicsAssetImporter
                                         try {
                                             writeToDam(name, gtin, assetUrl, hm, errorCase);
                                         } catch (InterruptedException e) {
-                                            this.logger.error("error writing dam" + e.getMessage());
+                                            this.logger.error("error while writing to dam" + e.getMessage());
                                         }
 
                                     } else {
-                                        this.logger.info("Erreur URL Fichier " + assetUrl);
+                                        this.logger.warn("File URL Error " + assetUrl);
                                     }
                                 }
                             }
@@ -387,85 +384,40 @@ public class AlkemicsAssetImporter
                     calendar.setTime(startDate);
                     calendar.add(Calendar.DATE, 1);
                     startDate = calendar.getTime();
-                    this.logger.info("NOMBRE TOTAL D'ASSET TRAITES: " + numberAsset);
+                    this.logger.info("TOTAL NUMBER OF ASSETS PROCESSED: " + numberAsset);
 
                 }
 
             }
         } catch (java.text.ParseException e) {
-            this.logger.error("Error when parsin", e.getMessage());
+            this.logger.error("Error when parsing", e.getMessage());
         }
     }
 
+    /**
+     * Get List of Asset from Alkemics.
+     *
+     * @param accessToken
+     * @param additionalParams
+     * @return Alkemics.
+     */
     public Alkemics getProductList(String accessToken, Map<String, Object> additionalParams) {
         Alkemics result = null;
 
         try {
-
-            CloseableHttpResponse response = null;
-
-            HttpGet httpGet = new HttpGet(this.urlProduct);
-            List nameValuePairs = new ArrayList();
-            nameValuePairs.add(new BasicNameValuePair("filter_source_include", "gtin,uuid,assets.pictures,assets.lastUpdatedAt.pictures,supplierId,isDisplayUnit,isConsumerUnit,namePublicLong.data"));
-            if ((additionalParams != null) && (!additionalParams.isEmpty())) {
-                for (Map.Entry<String, Object> entry : additionalParams.entrySet()) {
-                    nameValuePairs.add(new BasicNameValuePair(entry.getKey(), entry.getValue().toString()));
-                }
-            }
-            URI uri = new URIBuilder(httpGet.getURI())
-                    .addParameters(nameValuePairs)
-                    .build();
-            ((HttpRequestBase) httpGet).setURI(uri);
-            httpGet.addHeader("Authorization", "Bearer " + accessToken);
-
-            response = this.httpClient.execute(httpGet);
-
-            result = (Alkemics) gson.fromJson(EntityUtils.toString(response.getEntity()), Alkemics.class);
-
-        } catch (UnsupportedEncodingException e) {
-            this.logger.error("Error UnsupportedEncodingException " + e.getMessage());
-        } catch (ClientProtocolException e) {
-            this.logger.error("Error ClientProtocolException" + e.getMessage());
-        } catch (IOException e) {
-            this.logger.error("Error IOException " + e.getMessage());
+            result = AlkemicsAssetImporterUtils.retrieveAlkemicsProductList(alkemicsProductUrl, additionalParams, accessToken, httpClient);
         } catch (Exception e) {
             this.logger.error("Error IOException " + e.getMessage());
         } finally {
             this.logger.info("End GET PRODUCT BY 500");
             if (result == null) {
                 try {
-
-                    CloseableHttpResponse response = null;
-
-
-                    HttpGet httpGet = new HttpGet(this.urlProduct);
-                    List nameValuePairs = new ArrayList();
-                    nameValuePairs.add(new BasicNameValuePair("filter_source_include", "gtin,uuid,assets.pictures,assets.lastUpdatedAt.pictures,supplierId,isDisplayUnit,isConsumerUnit,namePublicLong.data"));
-                    if ((additionalParams != null) && (!additionalParams.isEmpty())) {
-                        for (Map.Entry<String, Object> entry : additionalParams.entrySet()) {
-                            nameValuePairs.add(new BasicNameValuePair(entry.getKey(), entry.getValue().toString()));
-                        }
-                    }
-                    URI uri = new URIBuilder(httpGet.getURI())
-                            .addParameters(nameValuePairs)
-                            .build();
-                    ((HttpRequestBase) httpGet).setURI(uri);
-                    accessToken = getAccessToken();
-
-                    httpGet.addHeader("Authorization", "Bearer " + accessToken);
-
-                    response = this.httpClient.execute(httpGet);
-
-                    result = (Alkemics) gson.fromJson(EntityUtils.toString(response.getEntity()), Alkemics.class);
+                    result = AlkemicsAssetImporterUtils.retrieveAlkemicsProductList(alkemicsProductUrl, additionalParams, accessToken, httpClient);
                 } catch (JsonSyntaxException e) {
                     this.logger.error("Error JsonSyntaxException " + e.getMessage());
 
-                } catch (ParseException | URISyntaxException e) {
+                } catch (ParseException e) {
                     this.logger.error("Error ParseException " + e.getMessage());
-
-                } catch (IOException e) {
-                    this.logger.error("Error IOException " + e.getMessage());
-
                 }
 
             }
@@ -473,43 +425,20 @@ public class AlkemicsAssetImporter
         return result;
     }
 
-    public String getAccessToken() {
-        HttpPost post = new HttpPost(this.urlToken);
-
-        String result = null;
-
-        HashMap<String, String> map = new HashMap();
-        map.put("client_id", this.clientId);
-        map.put("client_secret", this.clientSecret);
-        map.put("grant_type", "client_credentials");
-        try {
-            post.setEntity(new StringEntity(gson.toJson(map)));
-
-            CloseableHttpResponse response = this.httpClient.execute(post);
-
-            HashMap<String, String> resultMap = (HashMap) gson.fromJson(EntityUtils.toString(response.getEntity()), HashMap.class);
-
-            result = (String) resultMap.get("access_token");
-        } catch (UnsupportedEncodingException e) {
-            this.logger.error("Error when getting the secret", e.getMessage());
-        } catch (ClientProtocolException e) {
-            this.logger.error("Error when getting the secret", e.getMessage());
-        } catch (IOException e) {
-            this.logger.error("Error when getting the secret", e.getMessage());
-        } catch (JsonSyntaxException e) {
-            this.logger.error("Error when getting the secret", e.getMessage());
-        } catch (org.apache.http.ParseException e) {
-            this.logger.error("Error when getting the secret", e.getMessage());
-        } finally {
-            this.logger.info("End");
-        }
-        return result;
-    }
-
+    /**
+     * Method will form a path for asset and write to DAM.
+     *
+     * @param name      the name of the asset.
+     * @param gtin
+     * @param path
+     * @param meta
+     * @param errorCase
+     * @throws InterruptedException
+     */
     private void writeToDam(String name, String gtin, String path, Map<String, String> meta, boolean errorCase)
             throws InterruptedException {
         if (name.equals("UC_null")) {
-            this.logger.info("NOM ASSET UC_NULL :" + name);
+            this.logger.warn("NAME OF THE ASSET ASSET UC_NULL");
 
         } else {
             this.logger.info("WRITING ASSET:" + name);
@@ -581,28 +510,28 @@ public class AlkemicsAssetImporter
 
                 }
             } catch (InterruptedException e) {
-                this.logger.error("Errror InterruptedException" + e.getMessage());
+                this.logger.error("Error InterruptedException" + e.getMessage());
                 throw e;
             } catch (ValueFormatException e) {
-                this.logger.error("Errror ValueFormatException" + e.getMessage());
+                this.logger.error("Error ValueFormatException" + e.getMessage());
             } catch (LockException e) {
-                this.logger.error("Errror LockExceptione" + e.getMessage());
+                this.logger.error("Error LockException" + e.getMessage());
             } catch (ConstraintViolationException e) {
-                this.logger.error("Errror ConstraintViolationException" + e.getMessage());
+                this.logger.error("Error ConstraintViolationException" + e.getMessage());
             } catch (RepositoryException e) {
-                this.logger.info("Errror RepositoryException" + e.getMessage());
+                this.logger.info("Error RepositoryException" + e.getMessage());
             } catch (LoginException e) {
-                this.logger.error("Errror wLoginException" + e.getMessage());
+                this.logger.error("Error wLoginException" + e.getMessage());
             } catch (MalformedURLException e) {
-                this.logger.error("Errror MalformedURLException" + e.getMessage());
+                this.logger.error("Error MalformedURLException" + e.getMessage());
             } catch (IOException e) {
-                this.logger.error("Errror IOException" + e.getMessage());
+                this.logger.error("Error IOException" + e.getMessage());
             } finally {
                 if (inputStream != null) {
                     try {
                         inputStream.close();
                     } catch (IOException e) {
-                        this.logger.error("Errror while getting resolve" + e.getMessage());
+                        this.logger.error("Error while getting resolve" + e.getMessage());
                     }
                 }
                 if ((resolver != null) && (resolver.isLive())) {
@@ -614,23 +543,21 @@ public class AlkemicsAssetImporter
         }
     }
 
+    /**
+     * Method will check if Asset has S7 metadata.
+     *
+     * @param resource
+     * @param resourceResolver
+     * @return boolean true if Asset has S7 metadata.
+     */
     private boolean isScene7Asset(Resource resource, ResourceResolver resourceResolver) {
-
-
         resourceResolver.refresh();
         Resource metadataResource = resource.getChild("jcr:content/metadata");
-
-
         ValueMap properties = ResourceUtil.getValueMap(metadataResource);
-
         //   PayloadMap payloadMap = resourceResolver.adaptTo(PayloadMap.class);
-//   boolean status = payloadMap.isInWorkflow(resource.getPath() + "/jcr:content/renditions/original", true);
-
-
+        //   boolean status = payloadMap.isInWorkflow(resource.getPath() + "/jcr:content/renditions/original", true);
         final String s7sceneID = properties.get("dam:scene7ID", String.class);
-
         final String scene7FileStatus = properties.get("dam:scene7FileStatus", String.class);
-
         return (null != s7sceneID || null != scene7FileStatus);
 
 
@@ -656,44 +583,5 @@ public class AlkemicsAssetImporter
             if (activeAssetResources.size() > 0) ;
             Thread.sleep(waitTime);
         }
-    }
-
-    @ObjectClassDefinition(name = "Alkemics Asset importer", description = "Societe Cooperative Groupements d Achats des Centres Leclerc Asset importer configuration.")
-    public static @interface Config {
-        @AttributeDefinition(name = "Fr��quence(Cron-job expression)")
-        String scheduler_expression() default "0 0 3 15 JUL ? 2020";
-
-        @AttributeDefinition(name = "Concurrent task", description = "Whether or not to schedule this task concurrently")
-        boolean scheduler_concurrent() default false;
-
-        @AttributeDefinition(name = "alkemicsProductUrl", description = "Can be configured in /system/console/configMgr")
-        String alkemicsProductUrl() default "https://apis.alkemics.com/public/v1/products/list";
-
-        @AttributeDefinition(name = "alkemicsTokenUrl", description = "Can be configured in /system/console/configMgr")
-        String alkemicsTokenUrl() default "https://apis.alkemics.com/auth/v2/token";
-
-        @AttributeDefinition(name = "Client ID", description = "Can be configured in /system/console/configMgr")
-        String clientId() default "3708d601d2806caa9045c1881f414791662440ef";
-
-        @AttributeDefinition(name = "Client Secret", description = "Can be configured in /system/console/configMgr")
-        String clientSecret() default "3541b4816f92fb5f79d518e10476f4de5b04cfde";
-
-        @AttributeDefinition(name = "Initialisation", description = "Can be configured in /system/console/configMgr")
-        boolean init() default false;
-
-        @AttributeDefinition(name = "dryRun", description = "Can be configured in /system/console/configMgr")
-        boolean dryRun() default true;
-
-        @AttributeDefinition(name = "Batch Size", description = "Can be configured in /system/console/configMgr")
-        int batchSize() default 1000;
-
-        @AttributeDefinition(name = "WaitTime", description = "Can be configured in /system/console/configMgr")
-        int waitTime() default 120000;
-
-        @AttributeDefinition(name = "endDateEntry", description = "Can be configured in /system/console/configMgr")
-        String endDateEntry() default "01-07-2020";
-
-        @AttributeDefinition(name = "startDateEntry", description = "Can be configured in /system/console/configMgr")
-        String startDateEntry() default "28-06-2019";
     }
 }
