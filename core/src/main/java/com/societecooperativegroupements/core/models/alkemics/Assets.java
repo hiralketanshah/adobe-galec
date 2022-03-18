@@ -21,6 +21,8 @@ public class Assets {
 
     @JsonProperty("pictures")
     private List<Picture> pictures = null;
+    @JsonProperty("documents")
+    private List<Document> documents = null;
     @JsonProperty("lastUpdatedAt")
     private LastUpdatedAt lastUpdatedAt;
     @JsonIgnore
@@ -34,6 +36,16 @@ public class Assets {
     @JsonProperty("pictures")
     public void setPictures(List<Picture> pictures) {
         this.pictures = pictures != null ? new ArrayList<>(pictures) : null;
+    }
+    
+    @JsonProperty("documents")
+    public List<Document> getDocuments() {
+        return documents != null ? new ArrayList<>(documents) : null;
+    }
+
+    @JsonProperty("documents")
+    public void setDocuments(List<Document> documents) {
+        this.documents = documents != null ? new ArrayList<>(documents) : null;
     }
 
     @JsonProperty("lastUpdatedAt")
