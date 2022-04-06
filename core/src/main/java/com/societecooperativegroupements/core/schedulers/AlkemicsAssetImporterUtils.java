@@ -254,7 +254,7 @@ public class AlkemicsAssetImporterUtils {
                                         hm.put("updatedAt", productAsset.getUpdatedAt());
                                         hm.put("categorie", categorie);
                                         hm.put("libelle-produit", nomProduit);
-                                        hm.put("packshot-par-defaut", productAsset.getIsPackshot().toString());
+                                        hm.put("packshot-par-default", productAsset.getIsPackshot().toString());
 
                                         hm.put("gdsnFileName", productAsset.getGdsnFileName());
                                         if ((null == productAsset.getGdsnFileName()) ||
