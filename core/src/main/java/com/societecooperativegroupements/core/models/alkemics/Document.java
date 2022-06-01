@@ -20,7 +20,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "uniformResourceIdentifier",
     "documentTypeCode",
     "fileEffectiveEndDateTime",
-    "fileEffectiveStartDateTime"
+    "fileEffectiveStartDateTime",
+    "updatedAt"
 })
 public class Document {
 
@@ -38,6 +39,9 @@ public class Document {
     
     @JsonProperty("fileEffectiveStartDateTime")
     private Long fileEffectiveStartDateTime;
+    
+    @JsonProperty("updatedAt")
+    private String updatedAt;
         
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
@@ -97,5 +101,8 @@ public class Document {
         return StringUtils.EMPTY;
     }
 
-   
+    @JsonProperty("updatedAt")
+    public String getUpdatedAt() {
+        return updatedAt;
+    }
 }

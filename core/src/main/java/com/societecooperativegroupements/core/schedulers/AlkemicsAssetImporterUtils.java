@@ -12,6 +12,8 @@ import com.societecooperativegroupements.core.models.alkemics.Document;
 import com.societecooperativegroupements.core.models.alkemics.DocumentTypeCode;
 import com.societecooperativegroupements.core.models.alkemics.NamePublicLong;
 import com.societecooperativegroupements.core.models.alkemics.Picture;
+import com.societecooperativegroupements.core.utils.BrandNameUtils;
+import com.societecooperativegroupements.core.utils.DamUtils;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.client.ClientProtocolException;
@@ -26,6 +28,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +38,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -53,16 +57,6 @@ public class AlkemicsAssetImporterUtils {
 
     private static final Gson gson = new Gson();
 
-    /**
-     * Method will connect to Alkemics over HTTP API and get list of Products for
-     * the gievn filter.
-     *
-     * @param alkemicsProductUrl
-     * @param additionalParams
-     * @param accessToken
-     * @param httpClient
-     * @return Alkemics Product List
-     */
     public static Alkemics retrieveAlkemicsProductList(String alkemicsProductUrl, Map<String, Object> additionalParams,
             String accessToken, CloseableHttpClient httpClient) {
         try {
@@ -77,25 +71,37 @@ public class AlkemicsAssetImporterUtils {
                 }
             }
             URI uri = new URIBuilder(httpGet.getURI()).addParameters(nameValuePairs).build();
+
             ((HttpRequestBase) httpGet).setURI(uri);
+
             httpGet.addHeader("Authorization", "Bearer " + accessToken);
             response = httpClient.execute(httpGet);
             return (Alkemics) gson.fromJson(EntityUtils.toString(response.getEntity()), Alkemics.class);
         } catch (URISyntaxException | IOException e) {
-            logger.error("Error while connecting to Alkemices for Product List", e);
+            logger.error("Error while connecting to Alkemices for Product List : ", e);
         }
         return null;
     }
 
-    /**
-     * Method will retrive access token from Alkemics.
-     *
-     * @param alkemicsTokenUrl
-     * @param clientId
-     * @param clientSecret
-     * @param httpClient
-     * @return Access token.
-     */
+    private static String getSupplierName(String supplierName, CloseableHttpClient httpClient) {
+        CloseableHttpResponse response = null;
+        try {
+
+            HttpGet httpGet = new HttpGet(
+                    "https://api-fournisseur.referentiel.galec.fr/referentiel/v3/fournisseur/entite_juridique?filter[entite_juridique.code_tiers]=ega!"
+                            + supplierName
+                            + "&instance=dd77461f-e12c-40de-83c8-3166ef1a70cd&langue=dd77461f-e12c-40de-83c8-3166ef1a70cd");
+            URI uri = new URIBuilder(httpGet.getURI()).build();
+            ((HttpRequestBase) httpGet).setURI(uri);
+
+            response = httpClient.execute(httpGet);
+            return EntityUtils.toString(response.getEntity());
+        } catch (IOException | URISyntaxException e) {
+            logger.error("Error while connecting for supplier name : ", e);
+        }
+        return "test-supplier-name";
+    }
+
     public static String getAccessToken(String alkemicsTokenUrl, String clientId, String clientSecret,
             CloseableHttpClient httpClient) {
         HttpPost post = new HttpPost(alkemicsTokenUrl);
@@ -109,15 +115,7 @@ public class AlkemicsAssetImporterUtils {
             HashMap<String, String> resultMap = (HashMap) gson.fromJson(EntityUtils.toString(response.getEntity()),
                     HashMap.class);
             return (String) resultMap.get("access_token");
-        } catch (UnsupportedEncodingException e) {
-            logger.error("Error when getting the secret", e.getMessage());
-        } catch (ClientProtocolException e) {
-            logger.error("Error when getting the secret", e.getMessage());
-        } catch (IOException e) {
-            logger.error("Error when getting the secret", e.getMessage());
-        } catch (JsonSyntaxException e) {
-            logger.error("Error when getting the secret", e.getMessage());
-        } catch (org.apache.http.ParseException e) {
+        } catch (IOException | JsonSyntaxException e) {
             logger.error("Error when getting the secret", e.getMessage());
         } finally {
             logger.info("End");
@@ -125,24 +123,6 @@ public class AlkemicsAssetImporterUtils {
         return null;
     }
 
-    /**
-     * Asset import process for the day.
-     *
-     * @param jsonPath
-     * @param resolver
-     * @param httpClient
-     * @param clientSecret
-     * @param clientId
-     * @param alkemicsTokenUrl
-     * @param alkemicsProductUrl
-     * @param init
-     * @param endDateEntry
-     * @param startDateEntry
-     * @param dryRun
-     * @param activeAssetResources
-     * @param batchSize
-     * @param waitTime
-     */
     public static void importAsset(String jsonPath, ResourceResolver resolver, String alkemicsTokenUrl, String clientId,
             String clientSecret, CloseableHttpClient httpClient, String alkemicsProductUrl, boolean init,
             String startDateEntry, String endDateEntry, boolean dryRun, List<Resource> activeAssetResources,
@@ -156,8 +136,7 @@ public class AlkemicsAssetImporterUtils {
                         httpClient);
                 Map<String, Object> additionalParams = null;
                 // TODO this call seems unwanted.
-                Alkemics alkemics = getProductList(accessToken, additionalParams, alkemicsProductUrl, clientId,
-                        clientSecret, httpClient);
+                Alkemics alkemics = getProductList(accessToken, additionalParams, alkemicsProductUrl, httpClient);
                 if (null != alkemics)
                     logger.info("TOTAL NUMBER OF PRODUCT:" + alkemics.getTotalResults());
 
@@ -230,6 +209,9 @@ public class AlkemicsAssetImporterUtils {
                                         || (supplierId.equals(""))) {
                                     errorCase = true;
                                 }
+
+                                String supplierName = getSupplierName(supplierId, httpClient);
+                                String brandName = BrandNameUtils.getBrandName(productAccessToken, gtin, httpClient);
                                 Boolean isConsumerUnit = currentProduct.getIsConsumerUnit();
                                 Boolean isDisplayUnit = currentProduct.getIsDisplayUnit();
                                 String categorie = "UC";
@@ -263,6 +245,8 @@ public class AlkemicsAssetImporterUtils {
                                         hm.put("updatedAt", productAsset.getUpdatedAt());
                                         hm.put("categorie", categorie);
                                         hm.put("libelle-produit", nomProduit);
+                                        hm.put("supplierName", supplierName);
+                                        hm.put("marque", brandName);
 
                                         hm.put("gdsnFileName", productAsset.getGdsnFileName());
                                         if ((null == productAsset.getGdsnFileName())
@@ -301,40 +285,44 @@ public class AlkemicsAssetImporterUtils {
                                     String label = "FDS";
                                     String url = document.getUrl();
                                     if ((null != url) && (!url.equals(""))) {
-
+                                        
                                         Map<String, String> documentProperties = new HashMap<>();
-                                        documentProperties.put("uuid", uuid);
-                                        documentProperties.put("supplierId", supplierId);
-                                        documentProperties.put("gtin", currentProduct.getGtin());
-
-                                        documentProperties.put("nom-fichier-alkemics", FilenameUtils.getName(url));
-                                        documentProperties.put("date-debut-validite", document.getStartDateTime());
-                                        documentProperties.put("date-fin-validite", document.getEndDateTime());
-                                        documentProperties.put("source", "Alkemics");
-                                        documentProperties.put("usage", "Interne");
-
+                                        
                                         DocumentTypeCode documentTypeCode = document.getDocumentTypeCode();
                                         if (null != documentTypeCode) {
                                             label = (documentTypeCode.getLabel()
-                                                    .equalsIgnoreCase("Organic Certificate")) ? "CERTIF_BIO" : "FDS";
+                                                    .equalsIgnoreCase("Organic Certificate")) ? "certif-bio" : "FDS";
                                             documentProperties.put("type", label);
                                         }
-                                        String name;
-                                        if (label.equalsIgnoreCase("CERTIF_BIO")) {
-                                            name = label + "_" + "supplier_name" + "_" + "certificate_number" + "_"
-                                                    + uuid + ".pdf";
-                                        } else {
-                                            name = label + "_" + "supplier_name" + "_" + uuid + ".pdf";
-                                        }
-                                        documentProperties.put("name", name);
+                                        if(label.equalsIgnoreCase("certif-bio")) {
+                                            documentProperties.put("uuid", uuid);
+                                            documentProperties.put("supplierId", supplierId);
+                                            documentProperties.put("gtin", currentProduct.getGtin());
 
-                                        try {
-                                            writePDFToDam(resolver, name, label, url, documentProperties, false,
-                                                    activeAssetResources, batchSize, waitTime);
-                                        } catch (InterruptedException e) {
-                                            logger.error("error while writing to dam : {}", e.getMessage());
+                                            documentProperties.put("nom-fichier-alkemics", FilenameUtils.getName(url));
+                                            documentProperties.put("date-debut-validite", document.getStartDateTime());
+                                            documentProperties.put("date-fin-validite", document.getEndDateTime());
+                                            documentProperties.put("updatedAt", document.getUpdatedAt());
+                                            documentProperties.put("source", "Alkemics");
+                                            documentProperties.put("usage", "Interne");
+                                            documentProperties.put("supplierName", supplierName);
+                                            documentProperties.put("marque", brandName);
+
+                                            
+                                            String name = "CERTIF_BIO" + "_" + supplierName + "_" + "certificate_number" + "_"
+                                                    + uuid + ".pdf";
+                                            documentProperties.put("name", name);
+
+                                            try {
+                                                writePDFToDam(resolver, name, label, url, documentProperties, false,
+                                                        activeAssetResources, batchSize, waitTime);
+                                            } catch (InterruptedException e) {
+                                                logger.error("error while writing to dam : {}", e.getMessage());
+                                            }
+                                            logger.info(name);
                                         }
-                                        logger.info(name);
+                                        
+                                        
                                     } else {
                                         logger.warn("File URL Error " + url);
                                     }
@@ -360,22 +348,6 @@ public class AlkemicsAssetImporterUtils {
         }
     }
 
-    /**
-     * Method will form a path for asset and write to DAM.
-     * 
-     * @param resolver
-     *
-     * @param name
-     *            the name of the asset.
-     * @param gtin
-     * @param path
-     * @param meta
-     * @param errorCase
-     * @param activeAssetResources
-     * @param batchSize
-     * @param waitTime
-     * @throws InterruptedException
-     */
     private static void writeToDam(ResourceResolver resolver, String name, String gtin, String path,
             Map<String, String> meta, boolean errorCase, List<Resource> activeAssetResources, int batchSize,
             int waitTime) throws InterruptedException {
@@ -473,41 +445,41 @@ public class AlkemicsAssetImporterUtils {
 
                 AssetManager assetMgr = resolver.adaptTo(AssetManager.class);
 
-                String newFile = "/content/dam/dam/Usage-Interne/Produits/" + label +"/"+ name;
+                String newFile = "/content/dam/dam/Usage-Interne/Produits/" + label + "/" + name;
                 if (errorCase) {
-                    newFile = "/content/dam/dam/Usage-Interne/Erreur-Produits/" + label +"/"+ name;
+                    newFile = "/content/dam/dam/Usage-Interne/Erreur-Produits/" + label + "/" + name;
                 }
                 Resource assetExist = resolver.getResource(newFile);
                 if (assetExist != null) {
-                    logger.info("CET ASSET EXISTE DEJA");
+                    logger.info("Asset exists {}, hence, checking for updated date.", newFile);
+                    Resource metadata = assetExist.getChild("jcr:content/metadata");
+                    if (null != metadata) {
+                        ValueMap map = metadata.adaptTo(ValueMap.class);
+                        if (map.containsKey("updatedAt") && meta.containsKey("updatedAt")) {
+                            String oldDateString = map.get("updatedAt", String.class);
+                            String newDateString = meta.get("updatedAt");
+
+                            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
+                            Date oldDate = formatter.parse(oldDateString);
+                            Date newDate = formatter.parse(newDateString);
+                            if (newDate.compareTo(oldDate) > 0) {
+                                DamUtils.createRevision(resolver, assetMgr, newFile, inputStream, meta);
+                            }
+
+                        }
+                    }
+                } else {
+                    DamUtils.createAsset(assetMgr, adminSession, resolver, newFile, inputStream, meta);
+                    Resource assetResource = resolver.getResource(newFile);
+                    activeAssetResources.add(assetResource);
+                    if (activeAssetResources.size() >= batchSize) {
+                        logger.info("WAITING WORKFLOW PROCESS");
+                        Thread.sleep(waitTime);
+                        activeAssetResources.clear();
+                    }
                 }
-                long startTime = new Date().getTime();
-                Asset a = assetMgr.createAsset(newFile, inputStream, "application/pdf", true);
-                long endTime = new Date().getTime();
 
-                long timeElapsed = endTime - startTime;
-                logger.info("TEMPS D'INJECTION DANS AEM " + timeElapsed + "ms");
-
-                Node contentNode = adminSession.getNode(newFile + "/" + "jcr:content");
-                Node metaNode = contentNode.getNode("metadata");
-                Resource assetResource = resolver.getResource(newFile);
-
-                logger.info("MISE A JOUR DESMETADONNES PRODUITS");
-                for (Map.Entry<String, String> entry : meta.entrySet()) {
-                    metaNode.setProperty((String) entry.getKey(), (String) entry.getValue());
-                }
-                resolver.commit();
-                adminSession.save();
-                activeAssetResources.add(assetResource);
-
-                if (activeAssetResources.size() >= batchSize) {
-                    logger.info("WAITING WORKFLOW PROCESS");
-
-                    Thread.sleep(waitTime);
-                    activeAssetResources.clear();
-
-                }
-            } catch (InterruptedException | RepositoryException | IOException e) {
+            } catch (InterruptedException | RepositoryException | IOException | ParseException e) {
                 logger.error("Error while writing assets to DAM" + e.getMessage());
 
             } finally {
@@ -580,8 +552,7 @@ public class AlkemicsAssetImporterUtils {
             additionalParams.put("limit", limit);
             additionalParams.put("next_page", page);
 
-            Alkemics obj = getProductList(accessToken, additionalParams, alkemicsProductUrl, clientId, clientSecret,
-                    httpClient);
+            Alkemics obj = getProductList(accessToken, additionalParams, alkemicsProductUrl, httpClient);
             if (null != obj) {
 
                 if (null != obj.getData()) {
@@ -625,13 +596,11 @@ public class AlkemicsAssetImporterUtils {
      * @param accessToken
      * @param additionalParams
      * @param httpClient
-     * @param clientSecret
-     * @param clientId
      * @param alkemicsTokenUrl
      * @return Alkemics.
      */
     public static Alkemics getProductList(String accessToken, Map<String, Object> additionalParams,
-            String alkemicsProductUrl, String clientId, String clientSecret, CloseableHttpClient httpClient) {
+            String alkemicsProductUrl, CloseableHttpClient httpClient) {
         Alkemics result = null;
 
         try {
