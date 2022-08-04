@@ -5,6 +5,9 @@ import com.day.cq.dam.api.AssetManager;
 import com.day.cq.dam.api.Rendition;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.societecooperativegroupements.core.models.alkemics.AkDatum;
 import com.societecooperativegroupements.core.models.alkemics.Alkemics;
@@ -55,37 +58,70 @@ public class BrandNameUtils {
     private static final Logger logger = LoggerFactory.getLogger(BrandNameUtils.class);
 
     private static final Gson gson = new Gson();
-    
-    public static String getBrandName(String accessToken, String gtin, CloseableHttpClient httpClient) {
-        return getBrandCode(accessToken, gtin, httpClient);
+
+    public static String getBrandName(Integer code, String gtin, CloseableHttpClient httpClient) {
+        return getBrandDataValue(code, gtin, httpClient);
     }
 
-    public static String getBrandCode(String accessToken, String gtin, CloseableHttpClient httpClient) {
-        HttpPost post = new HttpPost("https://apis.alkemics.com/public/v1/products/list");
-        String code = StringUtils.EMPTY;
-        HashMap<String, Object> map = new HashMap();
-        map.put("filter_gtins_in", "03178041265140");
-        map.put("allow_not_consumer_units", true);
-        map.put("limit", "200");
+    private static String getBrandDataValue(Integer code, String gtin, CloseableHttpClient httpClient) {
+        CloseableHttpResponse response = null;
+        String val = StringUtils.EMPTY;
         try {
-            post.setEntity(new StringEntity(gson.toJson(map)));
-            post.addHeader("Authorization", "Bearer " + accessToken);
-            CloseableHttpResponse response = httpClient.execute(post);
-            HashMap<String, List<Object>> resultMap = (HashMap) gson.fromJson(EntityUtils.toString(response.getEntity()),
-                    HashMap.class);
-            ObjectMapper oMapper = new ObjectMapper();
-            List<Object> obj = resultMap.get("data");
-            for(Object test : obj) {
-                HashMap<String, HashMap<String, String>> parent = oMapper.convertValue(test, HashMap.class);
-                HashMap<String, String> brand = parent.get("brand");
-                code = String.valueOf(brand.get("code"));
-            }
+
+            HttpGet httpGet = new HttpGet(
+                    "https://api-codification.referentiel.galec.fr/referentiel/v3/codification/transcodification?filter[transcodification.valeur_1]=ega!"
+                            + code
+                            + "instance=dd77461f-e12c-40de-83c8-3166ef1a70cd&langue=dd77461f-e12c-40de-83c8-3166ef1a70cd");
+            URI uri = new URIBuilder(httpGet.getURI()).build();
+            ((HttpRequestBase) httpGet).setURI(uri);
+
+            response = httpClient.execute(httpGet);
             
-        } catch (IOException | JsonSyntaxException e) {
-            logger.error("Error when getting the brand code", e.getMessage());
-        } finally {
-            logger.info("End");
+
+            JsonObject mapOfObjects = gson.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
+            JsonArray data = mapOfObjects.getAsJsonArray("data");
+
+            for (JsonElement element : data) {
+                JsonObject brandObj = element.getAsJsonObject();
+                if (brandObj.has("valeur_2")) {
+                    val = brandObj.get("valeur_2").getAsString();
+                }
+            }
+            String libelle = getLibelle(val, httpClient);
+
+            return libelle;
+        } catch (IOException | URISyntaxException e) {
+            logger.error("Error while fetching brand name, {}", e.getMessage());
         }
-        return code;
+        return val;
+    }
+
+    private static String getLibelle(String val, CloseableHttpClient httpClient)
+            throws URISyntaxException, ClientProtocolException, IOException {
+        String libelle = StringUtils.EMPTY;
+        CloseableHttpResponse response = null;
+        if (null != val && !val.equalsIgnoreCase(StringUtils.EMPTY)) {
+
+            HttpGet httpGetLibelle = new HttpGet(
+                    "https://api-codification.referentiel.galec.fr/referentiel/v3/codification/marque?filter[marque.identifiant_unique_marque]=ega!"
+                            + val
+                            + "&instance=dd77461f-e12c-40de-83c8-3166ef1a70cd&langue=dd77461f-e12c-40de-83c8-3166ef1a70cd");
+            URI uriLibelle = new URIBuilder(httpGetLibelle.getURI()).build();
+            ((HttpRequestBase) httpGetLibelle).setURI(uriLibelle);
+
+            response = httpClient.execute(httpGetLibelle);
+
+            JsonObject mapOfObjectsLibelle = gson.fromJson(EntityUtils.toString(response.getEntity()),
+                    JsonObject.class);
+            JsonArray dataLibelle = mapOfObjectsLibelle.getAsJsonArray("data");
+
+            for (JsonElement element : dataLibelle) {
+                JsonObject libelleObj = element.getAsJsonObject();
+                if(libelleObj.has("libelle")) {
+                    libelle = libelleObj.get("libelle").getAsString();
+                }
+            }
+        }
+        return libelle;
     }
 }

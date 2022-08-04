@@ -61,43 +61,47 @@ public class DamUtils {
 
     private static final Gson gson = new Gson();
 
-    public static void createRevision(ResourceResolver resolver, AssetManager assetMgr, String newFile,
+    public static void createRevision(ResourceResolver resolver, AssetManager assetMgr, String fileName,
             InputStream inputStream, Map<String, String> meta) throws PersistenceException, RepositoryException {
         Session session = resolver.adaptTo(Session.class);
         if (resolver.hasChanges()) {
             resolver.commit();
         }
 
-        Asset tempAsset = createAsset(assetMgr, session, resolver, newFile + "version", inputStream, meta);
+        Asset tempAsset = createAsset(assetMgr, session, resolver, fileName + "version", inputStream, meta);
 
         // Create the new version
         AssetVersionManager versionManager = resolver.adaptTo(AssetVersionManager.class);
-        versionManager.createVersion(newFile, StringUtils.EMPTY);
+        versionManager.createVersion(fileName, StringUtils.EMPTY);
 
         if (session != null) {
-            resolver.delete(resolver.getResource(newFile + "/" + JcrConstants.JCR_CONTENT));
-            Node originalAssetJcrContentNode = session.getNode(newFile);
+            resolver.delete(resolver.getResource(fileName + "/" + JcrConstants.JCR_CONTENT));
+            Node originalAssetJcrContentNode = session.getNode(fileName);
             Node newAssetRenditionsNode = session.getNode(tempAsset.getPath() + "/" + JcrConstants.JCR_CONTENT);
             JcrUtil.copy(newAssetRenditionsNode, originalAssetJcrContentNode, null);
             JcrUtil.setProperty(originalAssetJcrContentNode, JcrConstants.JCR_LASTMODIFIED, new Date());
-            
-            
-            newAssetRenditionsNode.getParent().remove();
             session.save();
+            resolver.commit();
+
+            logger.info("Creating revision for {}", fileName);
+            session.getNode(tempAsset.getPath()).remove();
+
+            
+            session.save();
+            resolver.commit();
         }
     }
 
-    public static Asset createAsset(AssetManager assetMgr, Session session, ResourceResolver resolver,
-            String fileName, InputStream inputStream, Map<String, String> meta)
+    public static Asset createAsset(AssetManager assetMgr, Session session, ResourceResolver resolver, String fileName,
+            InputStream inputStream, Map<String, String> meta)
             throws PathNotFoundException, RepositoryException, PersistenceException {
-        
+
         long startTime = new Date().getTime();
         Asset tempAsset = assetMgr.createAsset(fileName, inputStream, "application/pdf", true);
         long endTime = new Date().getTime();
         long timeElapsed = endTime - startTime;
         logger.info("TEMPS D'INJECTION DANS AEM " + timeElapsed + "ms");
 
-        
         Node contentNode = session.getNode(tempAsset.getPath() + "/" + "jcr:content");
         Node metaNode = contentNode.getNode("metadata");
         for (Map.Entry<String, String> entry : meta.entrySet()) {
@@ -108,5 +112,4 @@ public class DamUtils {
         return tempAsset;
     }
 
-  
 }

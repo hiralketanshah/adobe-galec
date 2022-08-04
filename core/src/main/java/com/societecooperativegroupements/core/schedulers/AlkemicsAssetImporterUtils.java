@@ -5,17 +5,23 @@ import com.day.cq.dam.api.AssetManager;
 import com.day.cq.dam.api.Rendition;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.societecooperativegroupements.core.models.alkemics.AkDatum;
 import com.societecooperativegroupements.core.models.alkemics.Alkemics;
+import com.societecooperativegroupements.core.models.alkemics.Brand;
 import com.societecooperativegroupements.core.models.alkemics.Document;
 import com.societecooperativegroupements.core.models.alkemics.DocumentTypeCode;
 import com.societecooperativegroupements.core.models.alkemics.NamePublicLong;
 import com.societecooperativegroupements.core.models.alkemics.Picture;
 import com.societecooperativegroupements.core.utils.BrandNameUtils;
+import com.societecooperativegroupements.core.utils.CertificateNumberUtils;
 import com.societecooperativegroupements.core.utils.DamUtils;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -86,7 +92,6 @@ public class AlkemicsAssetImporterUtils {
     private static String getSupplierName(String supplierName, CloseableHttpClient httpClient) {
         CloseableHttpResponse response = null;
         try {
-
             HttpGet httpGet = new HttpGet(
                     "https://api-fournisseur.referentiel.galec.fr/referentiel/v3/fournisseur/entite_juridique?filter[entite_juridique.code_tiers]=ega!"
                             + supplierName
@@ -95,11 +100,23 @@ public class AlkemicsAssetImporterUtils {
             ((HttpRequestBase) httpGet).setURI(uri);
 
             response = httpClient.execute(httpGet);
-            return EntityUtils.toString(response.getEntity());
+            String val = StringUtils.EMPTY;
+
+            JsonObject mapOfObjects = gson.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
+            JsonArray data = mapOfObjects.getAsJsonArray("data");
+
+            for (JsonElement element : data) {
+                JsonObject paymentObj = element.getAsJsonObject();
+                if (val.equalsIgnoreCase(StringUtils.EMPTY)) {
+                    val = paymentObj.get("raison_sociale").getAsString();
+                }
+            }
+
+            return val;
         } catch (IOException | URISyntaxException e) {
             logger.error("Error while connecting for supplier name : ", e);
         }
-        return "test-supplier-name";
+        return "error";
     }
 
     public static String getAccessToken(String alkemicsTokenUrl, String clientId, String clientSecret,
@@ -117,6 +134,7 @@ public class AlkemicsAssetImporterUtils {
             return (String) resultMap.get("access_token");
         } catch (IOException | JsonSyntaxException e) {
             logger.error("Error when getting the secret", e.getMessage());
+            e.printStackTrace();
         } finally {
             logger.info("End");
         }
@@ -209,9 +227,19 @@ public class AlkemicsAssetImporterUtils {
                                         || (supplierId.equals(""))) {
                                     errorCase = true;
                                 }
-
+                                Brand brand = currentProduct.getBrand();
+                                String brandName = StringUtils.EMPTY;
+                                if(null != brand) {
+                                    if(null!=brand.getCode()) {
+                                        brandName = BrandNameUtils.getBrandName(currentProduct.getBrand().getCode(), gtin, httpClient);
+                                    }
+                                    else if(null!=brand.getLabel()) {
+                                        brandName = brand.getLabel();
+                                    }
+                                }
+                                
+                                
                                 String supplierName = getSupplierName(supplierId, httpClient);
-                                String brandName = BrandNameUtils.getBrandName(productAccessToken, gtin, httpClient);
                                 Boolean isConsumerUnit = currentProduct.getIsConsumerUnit();
                                 Boolean isDisplayUnit = currentProduct.getIsDisplayUnit();
                                 String categorie = "UC";
@@ -280,25 +308,27 @@ public class AlkemicsAssetImporterUtils {
 
                                 List<Document> assetDocumentList = currentProduct.getAssets().getDocuments();
                                 int numberDocument = assetDocumentList.size();
+                                String publicUrl = "https://assets-produit.referentiel.galec.net/is/content/gtinternet/dam/Usage-Interne/certif-bio/";
                                 for (int j = 0; j < numberDocument; j++) {
                                     Document document = ((Document) currentProduct.getAssets().getDocuments().get(j));
                                     String label = "FDS";
                                     String url = document.getUrl();
-                                    if ((null != url) && (!url.equals(""))) {
-                                        
+                                    if ((null != url) && (!url.equals("")) && FilenameUtils.getExtension(url).equalsIgnoreCase("pdf")) {
+
                                         Map<String, String> documentProperties = new HashMap<>();
                                         
+
                                         DocumentTypeCode documentTypeCode = document.getDocumentTypeCode();
                                         if (null != documentTypeCode) {
                                             label = (documentTypeCode.getLabel()
                                                     .equalsIgnoreCase("Organic Certificate")) ? "certif-bio" : "FDS";
                                             documentProperties.put("type", label);
                                         }
-                                        if(label.equalsIgnoreCase("certif-bio")) {
+                                        if (label.equalsIgnoreCase("certif-bio")) {
                                             documentProperties.put("uuid", uuid);
                                             documentProperties.put("supplierId", supplierId);
                                             documentProperties.put("gtin", currentProduct.getGtin());
-
+                                            
                                             documentProperties.put("nom-fichier-alkemics", FilenameUtils.getName(url));
                                             documentProperties.put("date-debut-validite", document.getStartDateTime());
                                             documentProperties.put("date-fin-validite", document.getEndDateTime());
@@ -307,22 +337,30 @@ public class AlkemicsAssetImporterUtils {
                                             documentProperties.put("usage", "Interne");
                                             documentProperties.put("supplierName", supplierName);
                                             documentProperties.put("marque", brandName);
-
                                             
-                                            String name = "CERTIF_BIO" + "_" + supplierName + "_" + "certificate_number" + "_"
-                                                    + uuid + ".pdf";
+                                            boolean errorPdf = false;
+
+                                            String updatedRaison = getUpdatedRaison(supplierName);
+                                            String certificate = CertificateNumberUtils.getCertificateDetails(productAccessToken, gtin, httpClient);
+                                            String name = "CERTIF_BIO" + "_" + updatedRaison + "_" + certificate + ".pdf";
+                                            
+                                            if(updatedRaison.equalsIgnoreCase("error") || certificate.equalsIgnoreCase("error")) {
+                                                errorPdf = true;
+                                                name = "CERTIF_BIO_error" + "_" + gtin + "_" + FilenameUtils.getName(url) + ".pdf";
+                                            }
+
                                             documentProperties.put("name", name);
+                                            documentProperties.put("url-publique", publicUrl.concat(name));
 
                                             try {
-                                                writePDFToDam(resolver, name, label, url, documentProperties, false,
+                                                writePDFToDam(resolver, name, label, url, documentProperties, errorPdf,
                                                         activeAssetResources, batchSize, waitTime);
                                             } catch (InterruptedException e) {
                                                 logger.error("error while writing to dam : {}", e.getMessage());
                                             }
                                             logger.info(name);
                                         }
-                                        
-                                        
+
                                     } else {
                                         logger.warn("File URL Error " + url);
                                     }
@@ -346,6 +384,15 @@ public class AlkemicsAssetImporterUtils {
         } catch (java.text.ParseException e) {
             logger.error("Error when parsing", e.getMessage());
         }
+    }
+
+    private static String getUpdatedRaison(String supplierName) {
+        if (!supplierName.equalsIgnoreCase(StringUtils.EMPTY)) {
+            supplierName = supplierName.replace("'", "_").replace("/", "").replace("&", "").replace(":", "").replace("°", "")
+                    .replace(",", "").replace("#", "").replace(".", "").replace("-", "").replace(" ", "_")
+                    .replace("Æ", "AE").replace("æ", "AE").replace("Œ", "OE").replace("œ", "OE");
+        }
+        return supplierName;
     }
 
     private static void writeToDam(ResourceResolver resolver, String name, String gtin, String path,
@@ -382,34 +429,37 @@ public class AlkemicsAssetImporterUtils {
                 if (assetExist != null) {
                     logger.info("CET ASSET EXISTE DEJA");
                 }
-                long startTime = new Date().getTime();
+                else {
+                    long startTime = new Date().getTime();
 
-                Asset a = assetMgr.createAsset(newFile, inputStream, "image/jpeg", true);
+                    Asset a = assetMgr.createAsset(newFile, inputStream, "image/jpeg", true);
 
-                long endTime = new Date().getTime();
+                    long endTime = new Date().getTime();
 
-                long timeElapsed = endTime - startTime;
-                logger.info("TEMPS D'INJECTION DANS AEM " + timeElapsed + "ms");
+                    long timeElapsed = endTime - startTime;
+                    logger.info("TEMPS D'INJECTION DANS AEM " + timeElapsed + "ms");
 
-                Node contentNode = adminSession.getNode(newFile + "/" + "jcr:content");
-                Node metaNode = contentNode.getNode("metadata");
-                Resource assetResource = resolver.getResource(newFile);
+                    Node contentNode = adminSession.getNode(newFile + "/" + "jcr:content");
+                    Node metaNode = contentNode.getNode("metadata");
+                    Resource assetResource = resolver.getResource(newFile);
 
-                logger.info("MISE A JOUR DESMETADONNES PRODUITS");
-                for (Map.Entry<String, String> entry : meta.entrySet()) {
-                    metaNode.setProperty((String) entry.getKey(), (String) entry.getValue());
+                    logger.info("MISE A JOUR DESMETADONNES PRODUITS");
+                    for (Map.Entry<String, String> entry : meta.entrySet()) {
+                        metaNode.setProperty((String) entry.getKey(), (String) entry.getValue());
+                    }
+                    resolver.commit();
+                    adminSession.save();
+                    activeAssetResources.add(assetResource);
+
+                    if (activeAssetResources.size() >= batchSize) {
+                        logger.info("WAITING WORKFLOW PROCESS");
+
+                        Thread.sleep(waitTime);
+                        activeAssetResources.clear();
+
+                    }
                 }
-                resolver.commit();
-                adminSession.save();
-                activeAssetResources.add(assetResource);
-
-                if (activeAssetResources.size() >= batchSize) {
-                    logger.info("WAITING WORKFLOW PROCESS");
-
-                    Thread.sleep(waitTime);
-                    activeAssetResources.clear();
-
-                }
+                
             } catch (InterruptedException | RepositoryException | IOException e) {
                 logger.error("Error while writing assets to DAM" + e.getMessage());
 
@@ -445,7 +495,7 @@ public class AlkemicsAssetImporterUtils {
 
                 AssetManager assetMgr = resolver.adaptTo(AssetManager.class);
 
-                String newFile = "/content/dam/dam/Usage-Interne/Produits/" + label + "/" + name;
+                String newFile = "/content/dam/dam/Usage-Interne/" + label + "/" + name;
                 if (errorCase) {
                     newFile = "/content/dam/dam/Usage-Interne/Erreur-Produits/" + label + "/" + name;
                 }
