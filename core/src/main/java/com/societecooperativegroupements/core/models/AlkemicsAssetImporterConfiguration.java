@@ -8,7 +8,7 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 public @interface AlkemicsAssetImporterConfiguration {
 
     @AttributeDefinition(name = "Frequency(Cron-job expression)")
-    String scheduler_expression() default "0 0 3 15 JUL ? 2020";
+    String scheduler_expression() default "0 0 12 1/1 * ? *";
 
     @AttributeDefinition(name = "Concurrent task", description = "Whether or not to schedule this task concurrently")
     boolean scheduler_concurrent() default false;
@@ -29,7 +29,7 @@ public @interface AlkemicsAssetImporterConfiguration {
     boolean init() default false;
 
     @AttributeDefinition(name = "dryRun", description = "Can be configured in /system/console/configMgr")
-    boolean dryRun() default true;
+    boolean dryRun() default false;
 
     @AttributeDefinition(name = "Batch Size", description = "Can be configured in /system/console/configMgr")
     int batchSize() default 1000;
@@ -38,7 +38,7 @@ public @interface AlkemicsAssetImporterConfiguration {
     int waitTime() default 120000;
 
     @AttributeDefinition(name = "endDateEntry", description = "Can be configured in /system/console/configMgr")
-    String endDateEntry() default "01-07-2020";
+    String endDateEntry() default "01-11-2022";
 
     @AttributeDefinition(name = "startDateEntry", description = "Can be configured in /system/console/configMgr")
     String startDateEntry() default "28-06-2019";
