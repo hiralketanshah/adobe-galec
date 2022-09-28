@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.societecooperativegroupements.core.models.alkemics.AkDatum;
@@ -93,7 +94,7 @@ public class CertificateNumberUtils {
                                     JsonObject certificateObj = certificateDetailListElement.getAsJsonObject();
                                     if (certificateObj.has("certificationValueText")
                                             && certificateObj.has("certificationEffectiveEndDate")) {
-                                        certificateValue = certificateObj.get("certificationValueText") != null ? certificateObj.get("certificationValueText").getAsString() : null;
+                                        certificateValue = certificateObj.get("certificationValueText") == JsonNull.INSTANCE ? null : certificateObj.get("certificationValueText").getAsString();
                                         long certificateEndDate = certificateObj.get("certificationEffectiveEndDate") == null ? 0L : certificateObj.get("certificationEffectiveEndDate").getAsLong();
                                         if (null != certificateValue) {
                                             certificateValue = getUpdatedCertificateValue(certificateValue);
