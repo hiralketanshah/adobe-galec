@@ -44,6 +44,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -94,7 +95,7 @@ public class AlkemicsAssetImporterUtils {
         try {
             HttpGet httpGet = new HttpGet(
                     "https://api-fournisseur.referentiel.galec.fr/referentiel/v3/fournisseur/entite_juridique?filter[entite_juridique.code_tiers]=ega!"
-                            + supplierName
+                            + URLEncoder.encode(supplierName, "UTF-8")
                             + "&instance=dd77461f-e12c-40de-83c8-3166ef1a70cd&langue=dd77461f-e12c-40de-83c8-3166ef1a70cd");
             URI uri = new URIBuilder(httpGet.getURI()).build();
             ((HttpRequestBase) httpGet).setURI(uri);
