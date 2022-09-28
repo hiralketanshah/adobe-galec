@@ -95,7 +95,7 @@ public class CertificateNumberUtils {
                                     if (certificateObj.has("certificationValueText")
                                             && certificateObj.has("certificationEffectiveEndDate")) {
                                         certificateValue = certificateObj.get("certificationValueText") == JsonNull.INSTANCE ? null : certificateObj.get("certificationValueText").getAsString();
-                                        long certificateEndDate = certificateObj.get("certificationEffectiveEndDate") == null ? 0L : certificateObj.get("certificationEffectiveEndDate").getAsLong();
+                                        long certificateEndDate = certificateObj.get("certificationEffectiveEndDate") == JsonNull.INSTANCE ? 0L : certificateObj.get("certificationEffectiveEndDate").getAsLong();
                                         if (null != certificateValue) {
                                             certificateValue = getUpdatedCertificateValue(certificateValue);
                                             certificateEndDateString = getUpdatedCertificateEndDate(certificateEndDate);
