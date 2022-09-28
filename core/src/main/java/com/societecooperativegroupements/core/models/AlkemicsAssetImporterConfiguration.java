@@ -14,7 +14,7 @@ public @interface AlkemicsAssetImporterConfiguration {
     boolean scheduler_concurrent() default false;
 
     @AttributeDefinition(name = "alkemicsProductUrl", description = "Can be configured in /system/console/configMgr")
-    String alkemicsProductUrl() default "https://apis.alkemics.com/public/v1/products/list";
+    String alkemicsProductUrl() default "https://apis.alkemics.com/public/v1/products";
 
     @AttributeDefinition(name = "alkemicsTokenUrl", description = "Can be configured in /system/console/configMgr")
     String alkemicsTokenUrl() default "https://apis.alkemics.com/auth/v2/token";

@@ -93,7 +93,7 @@ public class CertificateNumberUtils {
                                     JsonObject certificateObj = certificateDetailListElement.getAsJsonObject();
                                     if (certificateObj.has("certificationValueText")
                                             && certificateObj.has("certificationEffectiveEndDate")) {
-                                        certificateValue = certificateObj.get("certificationValueText").getAsString();
+                                        certificateValue = certificateObj.get("certificationValueText") != null ? certificateObj.get("certificationValueText").getAsString() : null;
                                         long certificateEndDate = certificateObj.get("certificationEffectiveEndDate") == null ? 0L : certificateObj.get("certificationEffectiveEndDate").getAsLong();
                                         if (null != certificateValue) {
                                             certificateValue = getUpdatedCertificateValue(certificateValue);
