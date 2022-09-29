@@ -107,7 +107,7 @@ public class AlkemicsAssetConnectorServlet extends SlingAllMethodsServlet implem
         ResourceResolver resolver = null;
         try {
             resolver = resolverFactory.getServiceResourceResolver(param);
-       
+           
             String jsonpath = req.getParameter("path");
             resp.getWriter().write("<p>Input JSON file " + jsonpath + " process...</p>");
         if (null != req.getParameter("init") && !req.getParameter("init").equals(""))
@@ -125,6 +125,11 @@ public class AlkemicsAssetConnectorServlet extends SlingAllMethodsServlet implem
 
         if (null != req.getParameter("startDateEntry") && !req.getParameter("startDateEntry").equals(""))
             startDateEntry = req.getParameter("startDateEntry");
+        
+        Resource productResource = resolver.getResource("/content/dam/dam/Usage-Interne/Produits");
+        if(null==productResource) {
+        	init=true;
+        }
         AlkemicsAssetImporterUtils.importAsset(null, resolver, this.alkemicsTokenUrl, this.clientId,
                 this.clientSecret, httpClient, this.alkemicsProductUrl, this.init, startDateEntry, endDateEntry,
                 this.dryRun, activeAssetResources, this.batchSize, this.waitTime);
