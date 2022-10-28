@@ -133,7 +133,7 @@ public class AlkemicsAssetConnectorServlet extends SlingAllMethodsServlet implem
         
         init=true;
         String start = req.getParameter("startDate");
-        if(!start.isBlank()) {
+        if(!start.isEmpty()) {
         	startDateEntry = start;
         }
         AlkemicsAssetImporterUtils.importAsset(null, resolver, this.alkemicsTokenUrl, this.clientId,
