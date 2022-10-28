@@ -93,27 +93,30 @@ public class AlkemicsAssetImporterUtils {
     private static String getSupplierName(String supplierName, CloseableHttpClient httpClient) {
         CloseableHttpResponse response = null;
         try {
-            HttpGet httpGet = new HttpGet(
-                    "https://api-fournisseur.referentiel.galec.fr/referentiel/v3/fournisseur/entite_juridique?filter[entite_juridique.code_tiers]=ega!"
-                            + URLEncoder.encode(supplierName, "UTF-8")
-                            + "&instance=dd77461f-e12c-40de-83c8-3166ef1a70cd&langue=dd77461f-e12c-40de-83c8-3166ef1a70cd");
-            URI uri = new URIBuilder(httpGet.getURI()).build();
-            ((HttpRequestBase) httpGet).setURI(uri);
+        	if(null!= supplierName) {
+        		 HttpGet httpGet = new HttpGet(
+                         "https://api-fournisseur.referentiel.galec.fr/referentiel/v3/fournisseur/entite_juridique?filter[entite_juridique.code_tiers]=ega!"
+                                 + URLEncoder.encode(supplierName, "UTF-8")
+                                 + "&instance=dd77461f-e12c-40de-83c8-3166ef1a70cd&langue=dd77461f-e12c-40de-83c8-3166ef1a70cd");
+                 URI uri = new URIBuilder(httpGet.getURI()).build();
+                 ((HttpRequestBase) httpGet).setURI(uri);
 
-            response = httpClient.execute(httpGet);
-            String val = StringUtils.EMPTY;
+                 response = httpClient.execute(httpGet);
+                 String val = StringUtils.EMPTY;
 
-            JsonObject mapOfObjects = gson.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
-            JsonArray data = mapOfObjects.getAsJsonArray("data");
+                 JsonObject mapOfObjects = gson.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
+                 JsonArray data = mapOfObjects.getAsJsonArray("data");
 
-            for (JsonElement element : data) {
-                JsonObject paymentObj = element.getAsJsonObject();
-                if (val.equalsIgnoreCase(StringUtils.EMPTY)) {
-                    val = paymentObj.get("raison_sociale").getAsString();
-                }
-            }
+                 for (JsonElement element : data) {
+                     JsonObject paymentObj = element.getAsJsonObject();
+                     if (val.equalsIgnoreCase(StringUtils.EMPTY)) {
+                         val = paymentObj.get("raison_sociale").getAsString();
+                     }
+                 }
 
-            return val;
+                 return val;
+        	}
+           
         } catch (IOException | URISyntaxException e) {
             logger.error("Error while connecting for supplier name : ", e);
         }
